@@ -120,9 +120,8 @@ import Footer from '../components/Footer.astro';
   </main>
 </Layout>
 
-<!-- Supabase CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+import { createClient } from '@supabase/supabase-js';
 /* ══════════════════════════════════════════════════════════
    IMPORTANT — SQL à exécuter dans Supabase une seule fois :
 
@@ -150,7 +149,6 @@ import Footer from '../components/Footer.astro';
 const ADMIN_PWD = 'adrianne2025'; // ← change ce mot de passe
 const SB_URL    = 'https://gnpjilwdehxsafdqdtak.supabase.co';
 const SB_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA';
-const { createClient } = supabase;
 const sb = createClient(SB_URL, SB_KEY);
 
 // ── Auth ─────────────────────────────────────────────────
