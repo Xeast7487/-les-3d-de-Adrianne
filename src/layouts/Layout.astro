@@ -187,6 +187,31 @@ const jsonLd   = JSON.stringify({
   <slot />
 
   <script>
+    // ── Compteur de visites journalières ─────────────────────────
+    // Ne compte pas la page admin pour éviter de fausser les stats
+    if (!window.location.pathname.startsWith('/admin')) {
+      try {
+        const _url = 'https://gnpjilwdehxsafdqdtak.supabase.co';
+        const _key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA';
+        const _today = new Date().toISOString().split('T')[0];
+        const _lsKey = 'adr-v-' + _today;
+        if (!localStorage.getItem(_lsKey)) {
+          localStorage.setItem(_lsKey, '1');
+          // Nettoie les anciennes clés des jours précédents
+          for (const k of Object.keys(localStorage)) {
+            if (k.startsWith('adr-v-') && k !== _lsKey) localStorage.removeItem(k);
+          }
+          fetch(`${_url}/rest/v1/rpc/increment_daily_visit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': _key, 'Authorization': 'Bearer ' + _key },
+            body: JSON.stringify({ visit_date: _today }),
+          });
+        }
+      } catch (_) { /* localStorage indisponible (ex: mode privé strict) */ }
+    }
+  </script>
+
+  <script>
     // ── Split words : hero (immédiat au chargement) ─────────────
     document.querySelectorAll('.split-words').forEach(el => {
       const isEm     = el.tagName === 'EM';

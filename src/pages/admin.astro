@@ -224,6 +224,22 @@ import { createClient } from '@supabase/supabase-js';
    CREATE POLICY "public_read"   ON storage.objects FOR SELECT USING (bucket_id = 'adrianne-prints');
    CREATE POLICY "anon_upload"   ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'adrianne-prints');
    CREATE POLICY "anon_delete"   ON storage.objects FOR DELETE USING (bucket_id = 'adrianne-prints');
+
+   -- Visites journalières (à exécuter une seule fois) :
+   CREATE TABLE IF NOT EXISTS public.daily_visits (
+     date  DATE    PRIMARY KEY DEFAULT CURRENT_DATE,
+     count INTEGER NOT NULL    DEFAULT 0
+   );
+   ALTER TABLE public.daily_visits ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "open" ON public.daily_visits FOR ALL USING (true) WITH CHECK (true);
+
+   CREATE OR REPLACE FUNCTION increment_daily_visit(visit_date DATE DEFAULT CURRENT_DATE)
+   RETURNS VOID AS $$
+   BEGIN
+     INSERT INTO public.daily_visits (date, count) VALUES (visit_date, 1)
+     ON CONFLICT (date) DO UPDATE SET count = daily_visits.count + 1;
+   END;
+   $$ LANGUAGE plpgsql SECURITY DEFINER;
 ══════════════════════════════════════════════════════════ */
 
 const ADMIN_PWD = 'adrianne2025'; // ← change ce mot de passe
@@ -365,6 +381,17 @@ form.addEventListener('submit', async e => {
   finally { saveBtn.disabled = false; saveText.textContent = 'Enregistrer'; }
 });
 
+// ── Visites journalières ──────────────────────────────────
+async function loadDailyVisit() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await sb.from('daily_visits').select('count').eq('date', today).maybeSingle();
+  const chip = document.getElementById('visit-chip');
+  if (chip) {
+    const n = data?.count || 0;
+    chip.innerHTML = `<span>${n}</span> visite${n !== 1 ? 's' : ''} aujourd'hui`;
+  }
+}
+
 // ── Load & render ─────────────────────────────────────────
 async function loadPrints() {
   const { data: prints } = await sb.from('adrianne_prints').select('*').order('created_at', { ascending: false });
@@ -379,7 +406,9 @@ async function loadPrints() {
   stats.innerHTML = `
     <div class="stat-chip"><span>${total}</span> création${total !== 1 ? 's' : ''}</div>
     <div class="stat-chip"><span>${featured}</span> coup${featured !== 1 ? 's' : ''} de cœur</div>
-    <div class="stat-chip"><span>${cats}</span> catégorie${cats !== 1 ? 's' : ''}</div>`;
+    <div class="stat-chip"><span>${cats}</span> catégorie${cats !== 1 ? 's' : ''}</div>
+    <div class="stat-chip" id="visit-chip"><span>…</span> visites aujourd'hui</div>`;
+  loadDailyVisit();
 
   if (!prints?.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
