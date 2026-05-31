@@ -15,6 +15,24 @@
         <a href="/#apropos">À propos</a>
         <a href="/contact">Commander</a>
       </div>
+      <div class="foot-social">
+        <p class="foot-social-title">Rejoindre la communauté</p>
+        <a href="https://www.facebook.com/groups/1855341244820696/" target="_blank" rel="noopener" class="social-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          Groupe Facebook
+        </a>
+        <a href="https://nexus.aventopro.com" target="_blank" rel="noopener" class="social-link nexus-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chat Nexus
+        </a>
+        <div class="nexus-code">
+          <span class="code-label">Code d'invitation</span>
+          <code id="nexus-code">7D02F809</code>
+          <button id="copy-btn" title="Copier">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
     <div class="foot-bottom">
       <p>© {new Date().getFullYear()} Les 3D d'Adrianne — Tous droits réservés</p>
@@ -24,7 +42,7 @@
 <style>
   footer { background: #0D1B2E; border-top: 1px solid rgba(160,192,232,0.12); padding: 3.5rem 2rem 1.5rem; }
   .container { max-width: 1160px; margin: 0 auto; }
-  .foot-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; padding-bottom: 2.5rem; border-bottom: 1px solid rgba(160,192,232,0.1); flex-wrap: wrap; }
+  .foot-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid rgba(160,192,232,0.1); flex-wrap: wrap; }
   .foot-logo { display: inline-flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: #EDF2F8; }
   .foot-logo-img { height: 32px; width: auto; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
   .foot-brand p { font-size: 0.85rem; color: rgba(248,246,242,0.45); line-height: 1.65; }
@@ -33,4 +51,25 @@
   .foot-nav a:hover { color: #F8F6F2; }
   .foot-bottom { padding-top: 1.5rem; }
   .foot-bottom p { font-size: 0.75rem; color: rgba(248,246,242,0.2); }
+  .foot-social-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(248,246,242,0.35); margin-bottom: 0.85rem; }
+  .foot-social { display: flex; flex-direction: column; gap: 0.6rem; }
+  .social-link { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: rgba(248,246,242,0.55); transition: color 0.2s; }
+  .social-link:hover { color: #EDF2F8; }
+  .nexus-link { color: rgba(42,92,180,0.8); }
+  .nexus-link:hover { color: #6B9FE4; }
+  .nexus-code { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; }
+  .code-label { font-size: 0.7rem; color: rgba(248,246,242,0.25); }
+  code { font-family: 'Courier New', monospace; font-size: 0.82rem; font-weight: 700; color: #6B9FE4; background: rgba(42,92,180,0.12); padding: 0.2rem 0.5rem; border-radius: 5px; letter-spacing: 0.08em; }
+  #copy-btn { background: none; border: none; color: rgba(248,246,242,0.3); cursor: pointer; padding: 2px; display: flex; transition: color 0.2s; }
+  #copy-btn:hover { color: #6B9FE4; }
 </style>
+
+<script>
+  const btn  = document.getElementById('copy-btn');
+  const code = document.getElementById('nexus-code');
+  btn?.addEventListener('click', () => {
+    navigator.clipboard.writeText(code.textContent.trim());
+    btn.style.color = '#4ade80';
+    setTimeout(() => btn.style.color = '', 1500);
+  });
+</script>
