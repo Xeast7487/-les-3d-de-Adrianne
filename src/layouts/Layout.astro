@@ -8,6 +8,22 @@ const {
 const siteUrl  = 'https://les3ddeadrianne.vercel.app';
 const pageUrl  = new URL(Astro.url.pathname, siteUrl).toString();
 const imageUrl = new URL(image, siteUrl).toString();
+const jsonLd   = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "Les 3D d'Adrianne",
+  "description": description,
+  "url": siteUrl,
+  "image": imageUrl,
+  "priceRange": "$$",
+  "serviceType": "Impression 3D sur commande",
+  "areaServed": "Québec, Canada",
+  "offers": {
+    "@type": "Offer",
+    "description": "Impressions 3D personnalisées : figurines, décorations, objets utilitaires",
+    "priceCurrency": "CAD"
+  }
+});
 ---
 <!DOCTYPE html>
 <html lang="fr">
@@ -36,22 +52,7 @@ const imageUrl = new URL(image, siteUrl).toString();
   <meta name="twitter:image"       content={imageUrl} />
 
   <!-- JSON-LD : données structurées pour Google -->
-  <script type="application/ld+json" set:html={JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Les 3D d'Adrianne",
-    "description": description,
-    "url": siteUrl,
-    "image": imageUrl,
-    "priceRange": "$$",
-    "serviceType": "Impression 3D sur commande",
-    "areaServed": "Québec, Canada",
-    "offers": {
-      "@type": "Offer",
-      "description": "Impressions 3D personnalisées : figurines, décorations, objets utilitaires",
-      "priceCurrency": "CAD",
-    }
-  })} />
+  <Fragment set:html={`<script type="application/ld+json">${jsonLd}</script>`} />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

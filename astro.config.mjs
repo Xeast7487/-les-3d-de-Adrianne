@@ -1,8 +1,6 @@
 import { defineConfig } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://les3ddeadrianne.vercel.app', // ← remplace par la vraie URL Vercel une fois déployé
+  site: 'https://les3ddeadrianne.vercel.app', // ← remplace par la vraie URL Vercel
   output: 'static',
-  integrations: [sitemap()],
 });
