@@ -150,7 +150,7 @@ function renderGallery(prints) {
         ${p.description ? `<p>${p.description}</p>` : ''}
         <div class="gcard-foot">
           ${p.price_range ? `<span class="gcard-price">À partir de ${p.price_range}</span>` : ''}
-          <a href="/contact" class="gcard-btn">Commander</a>
+          <a href="/contact?produit=${encodeURIComponent(p.name)}" class="gcard-btn">Commander</a>
         </div>
       </div>`;
     grid.appendChild(card);

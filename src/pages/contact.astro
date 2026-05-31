@@ -147,6 +147,21 @@ import Footer from '../components/Footer.astro';
   const spinner = document.getElementById('btn-spinner');
   const success = document.getElementById('success-msg');
 
+  // Pré-remplir si un produit est passé en URL
+  const produit = new URLSearchParams(window.location.search).get('produit');
+  if (produit) {
+    const desc = document.getElementById('description');
+    if (desc) desc.value = `Commande pour : ${produit}\n\n`;
+    const typeEl = document.getElementById('type');
+    // Focus sur le champ description pour que l'utilisateur continue
+    desc?.focus();
+    // Afficher une bannière
+    const banner = document.createElement('div');
+    banner.className = 'prefill-banner';
+    banner.innerHTML = `✨ Commande pré-remplie pour <strong>${produit}</strong>`;
+    form?.prepend(banner);
+  }
+
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     btn.disabled = true; btnText.style.display = 'none'; spinner.style.display = 'inline';
@@ -222,6 +237,11 @@ import Footer from '../components/Footer.astro';
   .success-msg h3 { font-size: 1.3rem; font-family: 'Cormorant Garamond', serif; }
   .success-msg p  { font-size: 0.875rem; color: var(--text-2); max-width: 320px; line-height: 1.65; }
 
+  .prefill-banner {
+    background: rgba(42,92,180,0.07); border: 1px solid rgba(42,92,180,0.2);
+    border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.5rem;
+    font-size: 0.84rem; color: var(--accent);
+  }
   @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; gap: 2.5rem; } }
   @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } .form-wrap { padding: 1.5rem; } }
 </style>
