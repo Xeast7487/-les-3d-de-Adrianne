@@ -1,0 +1,267 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+<Layout title="Suivre ma commande — Les 3D d'Adrianne" description="Entrez votre numéro de commande pour suivre l'avancement de votre impression 3D.">
+  <Nav />
+  <main>
+    <section class="hero-sm">
+      <div class="container">
+        <p class="eyebrow">Suivi en temps réel</p>
+        <h1>Votre commande</h1>
+        <p class="sub">Entrez votre numéro de commande pour voir l'avancement de votre impression.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+
+        <!-- Recherche -->
+        <div class="search-wrap" id="search-wrap">
+          <div class="search-card">
+            <label class="search-label">Numéro de commande</label>
+            <div class="search-row">
+              <input id="order-input" type="text" placeholder="ex: ADR-001" autocomplete="off" maxlength="20" />
+              <button id="search-btn" class="btn-primary">Rechercher</button>
+            </div>
+            <p id="search-err" class="search-err"></p>
+          </div>
+        </div>
+
+        <!-- Résultat -->
+        <div id="result" style="display:none">
+          <button id="back-btn" class="back-btn">← Nouvelle recherche</button>
+
+          <div class="order-card">
+            <div class="order-head">
+              <div>
+                <p class="order-num" id="res-num"></p>
+                <h2 id="res-name"></h2>
+              </div>
+              <div id="res-badge" class="status-badge"></div>
+            </div>
+
+            <!-- Barre de progression -->
+            <div class="progress-section">
+              <div class="steps" id="steps"></div>
+              <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+            </div>
+
+            <!-- Détails -->
+            <div class="order-details">
+              <div class="detail-row">
+                <div class="detail-item">
+                  <span class="detail-label">Description</span>
+                  <span class="detail-val" id="res-desc"></span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Délai estimé</span>
+                  <span class="detail-val" id="res-days"></span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Commande créée le</span>
+                  <span class="detail-val" id="res-date"></span>
+                </div>
+              </div>
+              <div id="res-notes-wrap" class="notes-wrap" style="display:none">
+                <p class="detail-label">Message d'Adrianne</p>
+                <p class="notes-text" id="res-notes"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA si livré -->
+          <div id="review-cta" class="review-cta" style="display:none">
+            <p>🎉 Votre commande est livrée ! Vous avez aimé votre impression ?</p>
+            <a href="/contact" class="btn-primary">Commander à nouveau</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+import { createClient } from '@supabase/supabase-js';
+const sb = createClient(
+  'https://gnpjilwdehxsafdqdtak.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA'
+);
+
+const STEPS = [
+  { key: 'en_attente',  label: 'Reçue',        icon: '📋' },
+  { key: 'confirme',    label: 'Confirmée',     icon: '✅' },
+  { key: 'impression',  label: 'Impression',    icon: '🖨️' },
+  { key: 'finition',    label: 'Finition',      icon: '✨' },
+  { key: 'pret',        label: 'Prête',         icon: '📦' },
+  { key: 'livre',       label: 'Livrée',        icon: '🎉' },
+];
+
+const STATUS_LABEL = {
+  en_attente: 'En attente',
+  confirme:   'Confirmée',
+  impression: 'En impression',
+  finition:   'Finition',
+  pret:       'Prête à livrer',
+  livre:      'Livrée',
+};
+
+const input    = document.getElementById('order-input');
+const btn      = document.getElementById('search-btn');
+const err      = document.getElementById('search-err');
+const result   = document.getElementById('result');
+const searchW  = document.getElementById('search-wrap');
+const backBtn  = document.getElementById('back-btn');
+
+// Check URL param
+const urlNum = new URLSearchParams(window.location.search).get('num');
+if (urlNum) { input.value = urlNum; search(); }
+
+btn.addEventListener('click', search);
+input.addEventListener('keydown', e => e.key === 'Enter' && search());
+backBtn.addEventListener('click', () => {
+  result.style.display = 'none';
+  searchW.style.display = 'block';
+  input.value = ''; err.textContent = '';
+  history.replaceState({}, '', '/suivi');
+});
+
+async function search() {
+  const num = input.value.trim().toUpperCase();
+  if (!num) { err.textContent = 'Veuillez entrer un numéro de commande.'; return; }
+  err.textContent = '';
+  btn.textContent = 'Recherche…'; btn.disabled = true;
+
+  const { data, error } = await sb
+    .from('adrianne_orders')
+    .select('*')
+    .eq('order_number', num)
+    .single();
+
+  btn.textContent = 'Rechercher'; btn.disabled = false;
+
+  if (error || !data) {
+    err.textContent = 'Numéro introuvable. Vérifiez votre numéro de commande.';
+    return;
+  }
+
+  showResult(data);
+  history.replaceState({}, '', `/suivi?num=${num}`);
+}
+
+function showResult(o) {
+  searchW.style.display = 'none';
+  result.style.display  = 'block';
+
+  document.getElementById('res-num').textContent  = `# ${o.order_number}`;
+  document.getElementById('res-name').textContent = o.client_name;
+  document.getElementById('res-desc').textContent = o.description;
+  document.getElementById('res-days').textContent = `${o.estimated_days} jour${o.estimated_days > 1 ? 's' : ''}`;
+  document.getElementById('res-date').textContent = new Date(o.created_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const badge = document.getElementById('res-badge');
+  badge.textContent = STATUS_LABEL[o.status] || o.status;
+  badge.className = `status-badge status-${o.status}`;
+
+  if (o.notes) {
+    document.getElementById('res-notes').textContent = o.notes;
+    document.getElementById('res-notes-wrap').style.display = 'block';
+  } else {
+    document.getElementById('res-notes-wrap').style.display = 'none';
+  }
+
+  // Steps
+  const stepIdx    = STEPS.findIndex(s => s.key === o.status);
+  const stepsEl    = document.getElementById('steps');
+  const fillEl     = document.getElementById('progress-fill');
+  stepsEl.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step' + (i <= stepIdx ? ' done' : '') + (i === stepIdx ? ' current' : '');
+    div.innerHTML = `<span class="step-icon">${s.icon}</span><span class="step-label">${s.label}</span>`;
+    stepsEl.appendChild(div);
+  });
+  const pct = Math.round((stepIdx / (STEPS.length - 1)) * 100);
+  fillEl.style.width = `${pct}%`;
+
+  // CTA si livré
+  document.getElementById('review-cta').style.display = o.status === 'livre' ? 'flex' : 'none';
+}
+</script>
+
+<style>
+  main { padding-top: 68px; }
+  .eyebrow { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+
+  .hero-sm { padding: 4.5rem 2rem 2.5rem; text-align: center; border-bottom: 1px solid var(--border); }
+  .hero-sm h1 { font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
+  .hero-sm .sub { font-size: 0.9rem; color: var(--text-2); max-width: 400px; margin: 0 auto; line-height: 1.7; }
+
+  .section { padding: 5rem 2rem 6rem; }
+  .container { max-width: 720px; margin: 0 auto; }
+
+  /* Search */
+  .search-wrap { display: flex; justify-content: center; }
+  .search-card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 480px; box-shadow: 0 4px 24px rgba(0,0,0,0.05); }
+  .search-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text); letter-spacing: 0.04em; margin-bottom: 0.75rem; }
+  .search-row { display: flex; gap: 0.6rem; }
+  .search-row input { flex: 1; background: var(--bg); border: 1.5px solid var(--border); color: var(--text); border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.95rem; outline: none; font-family: 'Jost', sans-serif; letter-spacing: 0.05em; transition: border-color 0.2s; }
+  .search-row input:focus { border-color: var(--accent); }
+  .search-err { font-size: 0.8rem; color: #dc2626; margin-top: 0.6rem; min-height: 1rem; }
+  .btn-primary { display: inline-flex; align-items: center; background: var(--accent); color: var(--white); padding: 0.7rem 1.4rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; font-family: 'Jost', sans-serif; transition: background 0.2s; white-space: nowrap; }
+  .btn-primary:hover { background: var(--accent-d); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Back */
+  .back-btn { background: none; border: none; color: var(--accent); font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; margin-bottom: 1.5rem; padding: 0; display: flex; align-items: center; gap: 0.3rem; transition: opacity 0.2s; }
+  .back-btn:hover { opacity: 0.7; }
+
+  /* Order card */
+  .order-card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.05); }
+  .order-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .order-num { font-size: 0.75rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .order-head h2 { font-size: 1.4rem; }
+
+  /* Status badge */
+  .status-badge { padding: 0.4rem 1rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; }
+  .status-en_attente { background: rgba(100,116,139,0.1); color: #64748b; }
+  .status-confirme   { background: rgba(42,92,180,0.1);  color: var(--accent); }
+  .status-impression { background: rgba(245,158,11,0.1); color: #d97706; }
+  .status-finition   { background: rgba(139,92,246,0.1); color: #7c3aed; }
+  .status-pret       { background: rgba(16,185,129,0.1); color: #059669; }
+  .status-livre      { background: rgba(181,98,122,0.1); color: var(--accent); }
+
+  /* Progress */
+  .progress-section { margin-bottom: 2rem; }
+  .steps { display: flex; justify-content: space-between; margin-bottom: 0.6rem; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex: 1; opacity: 0.3; transition: opacity 0.3s; }
+  .step.done { opacity: 0.6; }
+  .step.current { opacity: 1; }
+  .step-icon { font-size: 1.1rem; }
+  .step-label { font-size: 0.62rem; font-weight: 600; color: var(--text-2); text-align: center; letter-spacing: 0.03em; }
+  .step.current .step-label { color: var(--accent); }
+  .progress-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #C4677A); border-radius: 2px; transition: width 1s cubic-bezier(0.22,1,0.36,1); }
+
+  /* Details */
+  .detail-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.25rem; }
+  .detail-item { display: flex; flex-direction: column; gap: 0.3rem; }
+  .detail-label { font-size: 0.7rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.08em; }
+  .detail-val { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+  .notes-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; border-left: 3px solid var(--accent); }
+  .notes-text { font-size: 0.875rem; color: var(--text); line-height: 1.65; margin-top: 0.4rem; font-style: italic; }
+
+  /* Review CTA */
+  .review-cta { margin-top: 1.5rem; background: rgba(181,98,122,0.06); border: 1px solid rgba(181,98,122,0.2); border-radius: 16px; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .review-cta p { font-size: 0.9rem; color: var(--text); }
+
+  @media (max-width: 600px) {
+    .detail-row { grid-template-columns: 1fr 1fr; }
+    .step-label { display: none; }
+  }
+</style>
