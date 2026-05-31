@@ -111,6 +111,76 @@ const jsonLd   = JSON.stringify({
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--accent); opacity: 0.4; border-radius: 3px; }
+
+    /* ── Keyframes ── */
+    @keyframes eyebrowSlide {
+      from { opacity: 0; transform: translateX(-16px); letter-spacing: 0.3em; }
+      to   { opacity: 1; transform: none; letter-spacing: 0.18em; }
+    }
+    @keyframes wordUp {
+      from { opacity: 0; transform: translateY(110%); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes shimmerRose {
+      0%   { background-position: 0% center; }
+      100% { background-position: -200% center; }
+    }
+
+    /* ── Hero animations ── */
+    .anim-eyebrow {
+      animation: eyebrowSlide 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s both;
+    }
+    .anim-sub {
+      animation: fadeSlide 0.9s ease 0.85s both;
+    }
+    .anim-actions {
+      animation: fadeSlide 0.8s ease 1.1s both;
+    }
+
+    /* ── Shimmer rose/or sur "réinventée" ── */
+    .text-shimmer-rose {
+      background: linear-gradient(
+        90deg,
+        var(--accent) 0%,
+        #C4677A 25%,
+        #C08A38 50%,
+        #C4677A 75%,
+        var(--accent) 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerRose 4s linear infinite;
+      font-style: italic;
+    }
+
+    /* ── Word split ── */
+    .word-wrap {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
+      line-height: 1.15;
+    }
+    .word-inner {
+      display: inline-block;
+      animation: wordUp 0.9s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    /* ── Eyebrow scroll ── */
+    .anim-eyebrow-scroll {
+      opacity: 0;
+      transition: opacity 0.6s ease, transform 0.6s ease, letter-spacing 0.6s ease;
+      transform: translateX(-12px);
+      letter-spacing: 0.3em !important;
+    }
+    .anim-eyebrow-scroll.visible {
+      opacity: 1; transform: none; letter-spacing: 0.18em !important;
+    }
   </style>
 </head>
 <body>
@@ -210,11 +280,55 @@ const jsonLd   = JSON.stringify({
       });
     }
 
-    // ── Reveal animations (pages normales) ──────────────────────
+    // ── Split words : hero (immédiat au chargement) ─────────────
+    document.querySelectorAll('.split-words').forEach(el => {
+      const isEm     = el.tagName === 'EM';
+      const line2    = !!el.closest('.h1-line:last-child');
+      const delay    = 0.38 + (line2 ? 0.22 : 0);
+      const words    = el.textContent.trim().split(/\s+/);
+      el.innerHTML   = '';
+      if (isEm) el.removeAttribute('style');
+      words.forEach((w, i) => {
+        const wrap  = document.createElement('span');
+        const inner = document.createElement('span');
+        wrap.className  = 'word-wrap';
+        inner.className = 'word-inner' + (isEm ? ' text-shimmer-rose' : '');
+        inner.textContent = w;
+        inner.style.animationDelay = `${(delay + i * 0.09).toFixed(2)}s`;
+        wrap.appendChild(inner);
+        el.appendChild(wrap);
+        if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
+      });
+    });
+
+    // ── Split words : au scroll ──────────────────────────────────
+    const splitObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el    = e.target;
+        const words = el.textContent.trim().split(/\s+/);
+        el.innerHTML = '';
+        words.forEach((w, i) => {
+          const wrap  = document.createElement('span');
+          const inner = document.createElement('span');
+          wrap.className  = 'word-wrap';
+          inner.className = 'word-inner';
+          inner.textContent = w;
+          inner.style.animationDelay = `${(i * 0.1).toFixed(2)}s`;
+          wrap.appendChild(inner);
+          el.appendChild(wrap);
+          if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
+        });
+        splitObs.unobserve(el);
+      });
+    }, { threshold: 0.25 });
+    document.querySelectorAll('.split-words-scroll').forEach(el => splitObs.observe(el));
+
+    // ── Reveal standard ──────────────────────────────────────────
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
     }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    document.querySelectorAll('.reveal, .anim-eyebrow-scroll').forEach(el => obs.observe(el));
   </script>
 </body>
 </html>
