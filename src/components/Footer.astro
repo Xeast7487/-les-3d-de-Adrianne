@@ -1,0 +1,36 @@
+---
+---
+<footer>
+  <div class="container">
+    <div class="foot-inner">
+      <div class="foot-brand">
+        <a href="/" class="foot-logo">
+          <span class="logo-a">A</span>
+          <span>Les 3D d'Adrianne</span>
+        </a>
+        <p>Impressions 3D artisanales créées<br/>avec passion et précision.</p>
+      </div>
+      <div class="foot-nav">
+        <a href="/#galerie">Galerie</a>
+        <a href="/#apropos">À propos</a>
+        <a href="/contact">Commander</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© {new Date().getFullYear()} Les 3D d'Adrianne — Tous droits réservés</p>
+    </div>
+  </div>
+</footer>
+<style>
+  footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 3.5rem 2rem 1.5rem; }
+  .container { max-width: 1160px; margin: 0 auto; }
+  .foot-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .foot-logo { display: inline-flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; }
+  .logo-a { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: white; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .foot-brand p { font-size: 0.85rem; color: var(--text-2); line-height: 1.65; }
+  .foot-nav { display: flex; flex-direction: column; gap: 0.6rem; }
+  .foot-nav a { font-size: 0.85rem; color: var(--text-2); transition: color 0.2s; }
+  .foot-nav a:hover { color: var(--accent); }
+  .foot-bottom { padding-top: 1.5rem; }
+  .foot-bottom p { font-size: 0.75rem; color: rgba(26,23,20,0.3); }
+</style>

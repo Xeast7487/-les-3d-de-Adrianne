@@ -1,0 +1,83 @@
+---
+const links = [
+  { href: '/#galerie',  label: 'Galerie' },
+  { href: '/#apropos',  label: 'À propos' },
+  { href: '/contact',   label: 'Commander' },
+];
+---
+<header id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <span class="logo-a">A</span>
+      <span class="logo-text">Les 3D d'Adrianne</span>
+    </a>
+    <nav class="nav-links">
+      {links.map(l => <a href={l.href}>{l.label}</a>)}
+    </nav>
+    <a href="/contact" class="nav-cta">Faire une commande</a>
+    <button id="burger" class="burger" aria-label="Menu">
+      <span></span><span></span>
+    </button>
+  </div>
+</header>
+<div id="mobile-nav">
+  {links.map(l => <a href={l.href} class="mob-link">{l.label}</a>)}
+  <a href="/contact" class="mob-cta">Faire une commande</a>
+</div>
+
+<style>
+  #nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(250,248,245,0.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1160px; margin: 0 auto;
+    padding: 0 2rem; height: 68px;
+    display: flex; align-items: center; gap: 2.5rem;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+  .logo-a {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: var(--white);
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.2rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.01em; }
+  .nav-links { display: flex; gap: 2rem; margin-left: auto; }
+  .nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--text-2); letter-spacing: 0.03em; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    background: var(--accent); color: var(--white);
+    padding: 0.5rem 1.25rem; border-radius: 999px;
+    font-size: 0.82rem; font-weight: 600; letter-spacing: 0.03em;
+    transition: background 0.2s, transform 0.2s; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .nav-cta:hover { background: var(--accent-d); transform: translateY(-1px); }
+  .burger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto; }
+  .burger span { display: block; width: 20px; height: 1.5px; background: var(--text); transition: 0.3s; }
+
+  #mobile-nav {
+    display: none; position: fixed; top: 68px; left: 0; right: 0; z-index: 99;
+    background: var(--bg3); border-bottom: 1px solid var(--border);
+    flex-direction: column; padding: 1.5rem 2rem; gap: 1.25rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  #mobile-nav.open { display: flex; }
+  .mob-link { font-size: 1rem; color: var(--text-2); font-weight: 500; }
+  .mob-link:hover { color: var(--accent); }
+  .mob-cta {
+    display: inline-flex; background: var(--accent); color: var(--white);
+    padding: 0.65rem 1.5rem; border-radius: 999px;
+    font-size: 0.875rem; font-weight: 600; align-self: flex-start;
+  }
+
+  @media (max-width: 768px) { .nav-links, .nav-cta { display: none; } .burger { display: flex; } }
+</style>
+<script>
+  const burger = document.getElementById('burger');
+  const mNav   = document.getElementById('mobile-nav');
+  burger?.addEventListener('click', () => mNav?.classList.toggle('open'));
+  mNav?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mNav.classList.remove('open')));
+</script>

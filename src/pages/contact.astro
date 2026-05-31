@@ -1,0 +1,226 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+<Layout title="Commander — Les 3D d'Adrianne" description="Faites une demande d'impression 3D personnalisée à Adrianne.">
+  <Nav />
+  <main>
+    <section class="contact-hero">
+      <div class="container">
+        <p class="eyebrow">Restons en contact</p>
+        <h1>Faire une demande</h1>
+        <p class="sub">Décrivez votre projet et je vous réponds rapidement avec un devis personnalisé.</p>
+      </div>
+    </section>
+
+    <section class="contact-body">
+      <div class="container form-layout">
+
+        <!-- Infos -->
+        <div class="contact-info reveal">
+          <h2>Avant de commander</h2>
+          <div class="info-cards">
+            <div class="info-card">
+              <span class="ic-icon">⏱️</span>
+              <div>
+                <p class="ic-title">Délai de livraison</p>
+                <p class="ic-text">3 à 7 jours selon la complexité de la pièce</p>
+              </div>
+            </div>
+            <div class="info-card">
+              <span class="ic-icon">🎨</span>
+              <div>
+                <p class="ic-title">Couleurs disponibles</p>
+                <p class="ic-text">Large choix de filaments PLA. Précisez vos préférences dans le formulaire.</p>
+              </div>
+            </div>
+            <div class="info-card">
+              <span class="ic-icon">📦</span>
+              <div>
+                <p class="ic-title">Livraison</p>
+                <p class="ic-text">Remise en main propre ou envoi postal sécurisé</p>
+              </div>
+            </div>
+            <div class="info-card">
+              <span class="ic-icon">💬</span>
+              <div>
+                <p class="ic-title">Questions ?</p>
+                <p class="ic-text">N'hésitez pas à décrire votre idée même si elle est encore floue !</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="form-wrap reveal">
+          <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+            <!-- Web3Forms access key — remplace par ta clé -->
+            <input type="hidden" name="access_key" value="REMPLACE_PAR_TA_CLE_WEB3FORMS" />
+            <input type="hidden" name="subject" value="Nouvelle commande — Les 3D d'Adrianne" />
+            <input type="hidden" name="from_name" value="Site Les 3D d'Adrianne" />
+            <input type="checkbox" name="botcheck" style="display:none" />
+
+            <div class="form-row">
+              <div class="field">
+                <label for="name">Prénom & Nom <span class="req">*</span></label>
+                <input type="text" id="name" name="name" placeholder="Marie Tremblay" required />
+              </div>
+              <div class="field">
+                <label for="email">Adresse courriel <span class="req">*</span></label>
+                <input type="email" id="email" name="email" placeholder="marie@exemple.com" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="phone">Téléphone <span class="opt">(optionnel)</span></label>
+                <input type="tel" id="phone" name="phone" placeholder="418-555-0000" />
+              </div>
+              <div class="field">
+                <label for="type">Type d'impression <span class="req">*</span></label>
+                <select id="type" name="type" required>
+                  <option value="" disabled selected>Choisir une catégorie…</option>
+                  <option value="Figurine">Figurine / Personnage</option>
+                  <option value="Décoration">Objet décoratif</option>
+                  <option value="Utilitaire">Pièce utilitaire</option>
+                  <option value="Cadeau">Cadeau personnalisé</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="colors">Couleur(s) souhaitée(s) <span class="opt">(optionnel)</span></label>
+              <input type="text" id="colors" name="colors" placeholder="ex: blanc, noir, rouge — ou sans préférence" />
+            </div>
+
+            <div class="field">
+              <label for="budget">Budget approximatif <span class="opt">(optionnel)</span></label>
+              <select id="budget" name="budget">
+                <option value="" disabled selected>Sélectionner…</option>
+                <option value="Moins de 10$">Moins de 10 $</option>
+                <option value="10–25$">10 $ – 25 $</option>
+                <option value="25–50$">25 $ – 50 $</option>
+                <option value="50$ et plus">50 $ et plus</option>
+                <option value="À discuter">À discuter</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="description">Décrivez votre projet <span class="req">*</span></label>
+              <textarea id="description" name="description" rows="5"
+                placeholder="Décrivez votre idée en détail : dimensions souhaitées, référence d'image, utilisation prévue, urgence, etc." required></textarea>
+            </div>
+
+            <div class="field field-check">
+              <label class="check-label">
+                <input type="checkbox" name="consent" required />
+                <span>J'accepte que mes informations soient utilisées pour traiter ma demande <span class="req">*</span></span>
+              </label>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-btn">
+              <span id="btn-text">Envoyer la demande</span>
+              <span id="btn-spinner" style="display:none">Envoi en cours…</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </form>
+
+          <div id="success-msg" class="success-msg" style="display:none">
+            <span class="success-icon">✅</span>
+            <h3>Demande envoyée avec succès !</h3>
+            <p>Merci pour votre message. Je vous répondrai dans les plus brefs délais avec un devis personnalisé.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  const form    = document.getElementById('contact-form') as HTMLFormElement;
+  const btn     = document.getElementById('submit-btn') as HTMLButtonElement;
+  const btnText = document.getElementById('btn-text');
+  const spinner = document.getElementById('btn-spinner');
+  const success = document.getElementById('success-msg');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true; btnText.style.display = 'none'; spinner.style.display = 'inline';
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+      const data = await res.json();
+      if (data.success) {
+        form.style.display = 'none'; success.style.display = 'flex';
+      } else { throw new Error(); }
+    } catch {
+      btn.disabled = false; btnText.style.display = 'inline'; spinner.style.display = 'none';
+      alert('Une erreur est survenue. Veuillez réessayer.');
+    }
+  });
+</script>
+
+<style>
+  main { padding-top: 68px; }
+  .eyebrow { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+
+  /* Hero */
+  .contact-hero { padding: 5rem 2rem 3rem; text-align: center; border-bottom: 1px solid var(--border); }
+  .contact-hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); margin-bottom: 1rem; }
+  .contact-hero .sub { font-size: 0.95rem; color: var(--text-2); max-width: 420px; margin: 0 auto; line-height: 1.75; }
+
+  /* Layout */
+  .contact-body { padding: 5rem 2rem 6rem; }
+  .form-layout { display: grid; grid-template-columns: 320px 1fr; gap: 5rem; align-items: start; }
+
+  /* Info cards */
+  .contact-info h2 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+  .info-cards { display: flex; flex-direction: column; gap: 1rem; }
+  .info-card { display: flex; gap: 0.85rem; align-items: flex-start; padding: 1rem; background: var(--white); border: 1px solid var(--border); border-radius: 12px; }
+  .ic-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+  .ic-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
+  .ic-text  { font-size: 0.8rem; color: var(--text-2); line-height: 1.55; }
+
+  /* Form */
+  .form-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; box-shadow: 0 4px 30px rgba(0,0,0,0.04); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
+  .field label { font-size: 0.8rem; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+  .req { color: var(--accent); }
+  .opt { font-weight: 400; color: var(--text-2); }
+  .field input, .field select, .field textarea {
+    background: var(--bg); border: 1.5px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.875rem;
+    outline: none; font-family: 'Jost', sans-serif; transition: border-color 0.2s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field input::placeholder, .field textarea::placeholder { color: rgba(26,23,20,0.3); }
+  .field textarea { resize: vertical; min-height: 120px; }
+  .field-check { margin-top: 0.5rem; }
+  .check-label { display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; }
+  .check-label input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+  .check-label span { font-size: 0.8rem; color: var(--text-2); line-height: 1.5; }
+
+  .submit-btn {
+    width: 100%; padding: 0.9rem 2rem; margin-top: 0.5rem;
+    background: var(--accent); color: var(--white); border: none;
+    border-radius: 999px; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    font-family: 'Jost', sans-serif; letter-spacing: 0.03em;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .submit-btn:hover:not(:disabled) { background: var(--accent-d); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(181,98,122,0.35); }
+  .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+  .success-msg { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 3rem 2rem; gap: 0.75rem; }
+  .success-icon { font-size: 2.5rem; }
+  .success-msg h3 { font-size: 1.3rem; font-family: 'Cormorant Garamond', serif; }
+  .success-msg p  { font-size: 0.875rem; color: var(--text-2); max-width: 320px; line-height: 1.65; }
+
+  @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; gap: 2.5rem; } }
+  @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } .form-wrap { padding: 1.5rem; } }
+</style>
