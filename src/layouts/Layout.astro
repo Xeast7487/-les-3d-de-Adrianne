@@ -1,6 +1,13 @@
 ---
-export interface Props { title: string; description?: string }
-const { title, description = "Impressions 3D artisanales créées avec passion. Figurines, décorations et objets uniques." } = Astro.props;
+export interface Props { title: string; description?: string; image?: string }
+const {
+  title,
+  description = "Impressions 3D artisanales créées avec passion par Adrianne. Figurines, décorations et objets personnalisés sur commande.",
+  image = "/og-image.jpg",
+} = Astro.props;
+const siteUrl  = 'https://les3ddeadrianne.vercel.app';
+const pageUrl  = new URL(Astro.url.pathname, siteUrl).toString();
+const imageUrl = new URL(image, siteUrl).toString();
 ---
 <!DOCTYPE html>
 <html lang="fr">
@@ -9,6 +16,43 @@ const { title, description = "Impressions 3D artisanales créées avec passion. 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content={description} />
   <title>{title}</title>
+
+  <!-- Canonical -->
+  <link rel="canonical" href={pageUrl} />
+
+  <!-- Open Graph (Facebook, WhatsApp, etc.) -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content={pageUrl} />
+  <meta property="og:title"       content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image"       content={imageUrl} />
+  <meta property="og:locale"      content="fr_CA" />
+  <meta property="og:site_name"   content="Les 3D d'Adrianne" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image"       content={imageUrl} />
+
+  <!-- JSON-LD : données structurées pour Google -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Les 3D d'Adrianne",
+    "description": description,
+    "url": siteUrl,
+    "image": imageUrl,
+    "priceRange": "$$",
+    "serviceType": "Impression 3D sur commande",
+    "areaServed": "Québec, Canada",
+    "offers": {
+      "@type": "Offer",
+      "description": "Impressions 3D personnalisées : figurines, décorations, objets utilitaires",
+      "priceCurrency": "CAD",
+    }
+  })} />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
