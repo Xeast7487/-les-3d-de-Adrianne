@@ -36,6 +36,7 @@
     </div>
     <div class="foot-bottom">
       <p>© {new Date().getFullYear()} Les 3D d'Adrianne — Tous droits réservés</p>
+      <p class="nova-credit">Site réalisé par <a href="https://nova-studio.cfd" target="_blank" rel="noopener" class="nova-link">Nova Studio</a></p>
     </div>
   </div>
 </footer>
@@ -49,8 +50,11 @@
   .foot-nav { display: flex; flex-direction: column; gap: 0.6rem; }
   .foot-nav a { font-size: 0.85rem; color: rgba(248,246,242,0.5); transition: color 0.2s; }
   .foot-nav a:hover { color: #F8F6F2; }
-  .foot-bottom { padding-top: 1.5rem; }
+  .foot-bottom { padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
   .foot-bottom p { font-size: 0.75rem; color: rgba(248,246,242,0.2); }
+  .nova-credit { font-size: 0.72rem; color: rgba(248,246,242,0.18); }
+  .nova-link { color: rgba(248,246,242,0.35); text-decoration: none; border-bottom: 1px solid rgba(248,246,242,0.15); padding-bottom: 1px; transition: color 0.2s, border-color 0.2s; }
+  .nova-link:hover { color: #A0C0E8; border-color: #A0C0E8; }
   .foot-social-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(248,246,242,0.35); margin-bottom: 0.85rem; }
   .foot-social { display: flex; flex-direction: column; gap: 0.6rem; }
   .social-link { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: rgba(248,246,242,0.55); transition: color 0.2s; }
