@@ -15,6 +15,10 @@ const links = [
     <nav class="nav-links">
       {links.map(l => <a href={l.href}>{l.label}</a>)}
     </nav>
+    <span class="visit-counter" id="visit-counter" aria-label="Visiteurs aujourd'hui">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="visit-count">—</span>
+    </span>
     <a href="/contact" class="nav-cta">Faire une commande</a>
     <button id="burger" class="burger" aria-label="Menu">
       <span></span><span></span>
@@ -69,11 +73,36 @@ const links = [
     font-size: 0.875rem; font-weight: 600; align-self: flex-start;
   }
 
-  @media (max-width: 768px) { .nav-links, .nav-cta { display: none; } .burger { display: flex; } }
+  .visit-counter {
+    display: flex; align-items: center; gap: 0.35rem;
+    font-size: 0.78rem; font-weight: 500; color: var(--text-2);
+    background: rgba(0,0,0,0.05); border-radius: 999px;
+    padding: 0.28rem 0.7rem; white-space: nowrap; flex-shrink: 0;
+    user-select: none;
+  }
+  .visit-counter svg { opacity: 0.65; flex-shrink: 0; }
+
+  @media (max-width: 768px) { .nav-links, .nav-cta, .visit-counter { display: none; } .burger { display: flex; } }
 </style>
 <script>
   const burger = document.getElementById('burger');
   const mNav   = document.getElementById('mobile-nav');
   burger?.addEventListener('click', () => mNav?.classList.toggle('open'));
   mNav?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mNav.classList.remove('open')));
+
+  // ── Compteur de visites dans le header ──────────────────────────
+  (async () => {
+    try {
+      const _url   = 'https://gnpjilwdehxsafdqdtak.supabase.co';
+      const _key   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA';
+      const today  = new Date().toISOString().split('T')[0];
+      const res    = await fetch(`${_url}/rest/v1/daily_visits?select=count&date=eq.${today}`, {
+        headers: { 'apikey': _key, 'Authorization': 'Bearer ' + _key },
+      });
+      const data   = await res.json();
+      const n      = data?.[0]?.count ?? 0;
+      const el     = document.getElementById('visit-count');
+      if (el) el.textContent = `${n} visiteur${n !== 1 ? 's' : ''} aujourd'hui`;
+    } catch (_) {}
+  })();
 </script>
