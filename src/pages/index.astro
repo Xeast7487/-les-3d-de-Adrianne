@@ -134,14 +134,22 @@ function renderGallery(prints) {
   if (!prints.length) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   prints.forEach((p, i) => {
+    const photos = p.photo_urls?.length ? p.photo_urls : (p.photo_url ? [p.photo_url] : []);
+    const hasMany = photos.length > 1;
+
     const card = document.createElement('div');
     card.className = 'gcard';
     card.style.animationDelay = `${i * 0.07}s`;
     card.innerHTML = `
       <div class="gcard-img">
-        ${p.photo_url
-          ? `<img src="${p.photo_url}" alt="${p.name}" loading="lazy" />`
+        ${photos.length
+          ? `<img src="${photos[0]}" alt="${p.name}" loading="lazy" />`
           : `<div class="gcard-placeholder"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".25"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}
+        ${hasMany ? `
+          <button class="gcard-nav gcard-prev" type="button" aria-label="Photo précédente">&#8249;</button>
+          <button class="gcard-nav gcard-next" type="button" aria-label="Photo suivante">&#8250;</button>
+          <div class="gcard-dots">${photos.map((_, j) => `<span class="gcard-dot${j === 0 ? ' active' : ''}"></span>`).join('')}</div>
+        ` : ''}
         ${p.featured ? '<span class="gcard-badge">Coup de cœur ✨</span>' : ''}
         <div class="gcard-cat">${p.category}</div>
       </div>
@@ -153,6 +161,20 @@ function renderGallery(prints) {
           <a href="/contact?produit=${encodeURIComponent(p.name)}" class="gcard-btn">Commander</a>
         </div>
       </div>`;
+
+    if (hasMany) {
+      let idx = 0;
+      const img  = card.querySelector('img');
+      const dots = card.querySelectorAll('.gcard-dot');
+      function goTo(n) {
+        idx = (n + photos.length) % photos.length;
+        img.src = photos[idx];
+        dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+      }
+      card.querySelector('.gcard-prev').addEventListener('click', e => { e.preventDefault(); goTo(idx - 1); });
+      card.querySelector('.gcard-next').addEventListener('click', e => { e.preventDefault(); goTo(idx + 1); });
+    }
+
     grid.appendChild(card);
   });
 }
@@ -242,8 +264,18 @@ loadPrints();
   .gcard-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
   .gcard:hover .gcard-img img { transform: scale(1.04); }
   .gcard-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-2); }
-  .gcard-badge { position: absolute; top: 0.75rem; left: 0.75rem; background: var(--accent); color: var(--white); font-size: 0.68rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 999px; }
-  .gcard-cat { position: absolute; bottom: 0.75rem; right: 0.75rem; background: rgba(237,242,248,0.92); backdrop-filter: blur(4px); font-size: 0.68rem; font-weight: 600; color: var(--text-2); padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--border); letter-spacing: 0.04em; }
+  .gcard-badge { position: absolute; top: 0.75rem; left: 0.75rem; background: var(--accent); color: var(--white); font-size: 0.68rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 999px; z-index: 2; }
+  .gcard-cat { position: absolute; bottom: 0.75rem; right: 0.75rem; background: rgba(237,242,248,0.92); backdrop-filter: blur(4px); font-size: 0.68rem; font-weight: 600; color: var(--text-2); padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--border); letter-spacing: 0.04em; z-index: 2; }
+
+  /* Carousel */
+  .gcard-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(237,242,248,0.9); border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); z-index: 3; opacity: 0; transition: opacity 0.2s, background 0.2s; padding: 0; }
+  .gcard:hover .gcard-nav { opacity: 1; }
+  .gcard-nav:hover { background: var(--white); }
+  .gcard-prev { left: 0.4rem; }
+  .gcard-next { right: 0.4rem; }
+  .gcard-dots { position: absolute; bottom: 0.45rem; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 2; }
+  .gcard-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(237,242,248,0.45); transition: background 0.2s; }
+  .gcard-dot.active { background: var(--white); }
   .gcard-body { padding: 1.25rem; }
   .gcard-body h3 { font-size: 1.05rem; font-weight: 600; font-family: 'Cormorant Garamond', serif; margin-bottom: 0.4rem; }
   .gcard-body p { font-size: 0.82rem; color: var(--text-2); line-height: 1.6; margin-bottom: 0.75rem; }
