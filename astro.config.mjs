@@ -1,8 +1,8 @@
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel/serverless';
+import vercel from '@astrojs/vercel';
 
 export default defineConfig({
   site: 'https://les3darianne.xyz',
-  output: 'hybrid',
+  output: 'server',
   adapter: vercel(),
 });
