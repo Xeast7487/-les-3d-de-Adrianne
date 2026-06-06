@@ -1,0 +1,238 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+<Layout title="Réalisations — Les 3D d'Adrianne">
+  <Nav />
+  <main>
+
+    <!-- ═══ HERO ═══════════════════════════════════════════════ -->
+    <section class="real-hero">
+      <div class="hero-deco"></div>
+      <div class="container">
+        <p class="eyebrow anim-eyebrow">Portfolio · Créations passées</p>
+        <h1>Mes <em>réalisations</em></h1>
+        <p class="hero-sub">Un aperçu de ce que j'ai déjà créé. Ces pièces ne sont pas à vendre, mais elles peuvent vous inspirer pour votre prochaine commande personnalisée !</p>
+        <a href="/contact" class="btn-primary">Demander une création similaire</a>
+      </div>
+    </section>
+
+    <!-- ═══ GALERIE RÉALISATIONS ════════════════════════════════ -->
+    <section class="section" id="realisations">
+      <div class="container">
+
+        <!-- Filtres catégories -->
+        <div class="filters reveal" id="filters">
+          <button class="filter-btn active" data-cat="">Tout voir</button>
+          <button class="filter-btn" data-cat="Figurines">Figurines</button>
+          <button class="filter-btn" data-cat="Déco">Décoration</button>
+          <button class="filter-btn" data-cat="Utilitaires">Utilitaires</button>
+          <button class="filter-btn" data-cat="Cadeaux">Cadeaux</button>
+          <button class="filter-btn" data-cat="Divers">Divers</button>
+        </div>
+
+        <!-- Grille chargée via JS -->
+        <div id="real-grid" class="gallery-grid">
+          <div class="gallery-skeleton"></div>
+          <div class="gallery-skeleton"></div>
+          <div class="gallery-skeleton"></div>
+          <div class="gallery-skeleton"></div>
+        </div>
+        <div id="real-empty" style="display:none" class="gallery-empty">
+          <p>✨ Les premières réalisations arrivent bientôt !</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ CTA ══════════════════════════════════════════════════ -->
+    <section class="section cta-section">
+      <div class="container">
+        <div class="cta-card reveal">
+          <p class="eyebrow-dark anim-eyebrow-scroll">Vous avez une idée en tête ?</p>
+          <h2 class="split-words-scroll">Faisons-le ensemble</h2>
+          <p>Ces réalisations peuvent vous servir d'inspiration. Contactez-moi pour créer quelque chose de similaire ou de complètement unique !</p>
+          <a href="/contact" class="btn-light btn-lg">Me contacter</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+import { createClient } from '@supabase/supabase-js';
+const SB_URL = 'https://gnpjilwdehxsafdqdtak.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA';
+const sb = createClient(SB_URL, SB_KEY);
+
+let allItems = [];
+let activeFilter = '';
+
+async function loadRealisations() {
+  const { data } = await sb.from('adrianne_realisations').select('*').order('created_at', { ascending: false });
+  allItems = data || [];
+  renderGrid(allItems);
+}
+
+function renderGrid(items) {
+  const grid  = document.getElementById('real-grid');
+  const empty = document.getElementById('real-empty');
+  grid.innerHTML = '';
+  if (!items.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  items.forEach((p, i) => {
+    const photos = p.photo_urls?.length ? p.photo_urls : (p.photo_url ? [p.photo_url] : []);
+    const hasMany = photos.length > 1;
+
+    const card = document.createElement('div');
+    card.className = 'gcard';
+    card.style.animationDelay = `${i * 0.07}s`;
+    card.innerHTML = `
+      <div class="gcard-img">
+        ${photos.length
+          ? `<img src="${photos[0]}" alt="${p.name}" loading="lazy" />`
+          : `<div class="gcard-placeholder"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".25"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}
+        ${hasMany ? `
+          <button class="gcard-nav gcard-prev" type="button" aria-label="Photo précédente">&#8249;</button>
+          <button class="gcard-nav gcard-next" type="button" aria-label="Photo suivante">&#8250;</button>
+          <div class="gcard-dots">${photos.map((_, j) => `<span class="gcard-dot${j === 0 ? ' active' : ''}"></span>`).join('')}</div>
+        ` : ''}
+        ${p.featured ? '<span class="gcard-badge">Coup de cœur ✨</span>' : ''}
+        <div class="gcard-nosale">Non à vendre</div>
+        <div class="gcard-cat">${p.category}</div>
+      </div>
+      <div class="gcard-body">
+        <h3>${p.name}</h3>
+        ${p.description ? `<p>${p.description}</p>` : ''}
+        <a href="/contact?inspiration=${encodeURIComponent(p.name)}" class="gcard-inspire-btn">Créer quelque chose de similaire →</a>
+      </div>`;
+
+    if (hasMany) {
+      let idx = 0;
+      const img  = card.querySelector('img');
+      const dots = card.querySelectorAll('.gcard-dot');
+      function goTo(n) {
+        idx = (n + photos.length) % photos.length;
+        img.src = photos[idx];
+        dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+      }
+      card.querySelector('.gcard-prev').addEventListener('click', e => { e.preventDefault(); goTo(idx - 1); });
+      card.querySelector('.gcard-next').addEventListener('click', e => { e.preventDefault(); goTo(idx + 1); });
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.cat;
+    const filtered = activeFilter ? allItems.filter(p => p.category === activeFilter) : allItems;
+    renderGrid(filtered);
+  });
+});
+
+loadRealisations();
+</script>
+
+<style>
+  main { padding-top: 68px; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--accent); color: var(--white);
+    padding: 0.75rem 1.75rem; border-radius: 999px;
+    font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s; letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--accent-d); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(42,92,180,0.3); }
+
+  .btn-light {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: #EDF2F8; color: var(--dark);
+    padding: 0.75rem 1.75rem; border-radius: 999px;
+    font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s; letter-spacing: 0.02em;
+  }
+  .btn-light:hover { background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+  .btn-light.btn-lg { padding: 0.9rem 2.25rem; font-size: 0.95rem; }
+
+  .section { padding: 6rem 2rem; }
+  .eyebrow { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+  .eyebrow-dark { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; }
+
+  /* Hero */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none} }
+  .real-hero {
+    position: relative; padding: 8rem 2rem 6rem; background: var(--bg);
+    border-bottom: 1px solid var(--border); overflow: hidden;
+  }
+  .hero-deco {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 55% 65% at 90% 20%, rgba(42,92,180,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 50% at 5% 85%, rgba(192,138,56,0.06) 0%, transparent 55%);
+  }
+  .real-hero .container { position: relative; max-width: 700px; }
+  .real-hero .eyebrow { animation: fadeUp 0.6s ease 0.1s both; display: block; }
+  .real-hero h1 { font-size: clamp(2.4rem, 6vw, 4.5rem); font-weight: 600; margin-bottom: 1.25rem; line-height: 1.08; animation: fadeUp 0.7s ease 0.2s both; }
+  .real-hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub { font-size: 1rem; color: var(--text-2); line-height: 1.75; margin-bottom: 2rem; max-width: 560px; animation: fadeUp 0.7s ease 0.35s both; }
+  .real-hero .btn-primary { animation: fadeUp 0.6s ease 0.5s both; }
+
+  /* Filtres */
+  .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; justify-content: center; }
+  .filter-btn {
+    background: var(--white); border: 1.5px solid var(--border); color: var(--text-2);
+    padding: 0.45rem 1.1rem; border-radius: 999px; font-size: 0.82rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--white); }
+
+  /* Gallery grid */
+  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  @keyframes gcardIn { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none} }
+  .gcard { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; animation: gcardIn 0.4s ease-out both; }
+  .gcard:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+  .gcard-img { position: relative; aspect-ratio: 4/3; background: var(--bg2); overflow: hidden; }
+  .gcard-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .gcard:hover .gcard-img img { transform: scale(1.04); }
+  .gcard-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-2); }
+  .gcard-badge { position: absolute; top: 0.75rem; left: 0.75rem; background: var(--accent); color: var(--white); font-size: 0.68rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 999px; z-index: 2; }
+  .gcard-nosale { position: absolute; top: 0.75rem; right: 0.75rem; background: rgba(13,27,46,0.65); backdrop-filter: blur(4px); color: rgba(237,242,248,0.85); font-size: 0.62rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 999px; letter-spacing: 0.05em; z-index: 2; }
+  .gcard-cat { position: absolute; bottom: 0.75rem; right: 0.75rem; background: rgba(237,242,248,0.92); backdrop-filter: blur(4px); font-size: 0.68rem; font-weight: 600; color: var(--text-2); padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid var(--border); letter-spacing: 0.04em; z-index: 2; }
+
+  /* Carousel */
+  .gcard-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(237,242,248,0.9); border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); z-index: 3; opacity: 0; transition: opacity 0.2s, background 0.2s; padding: 0; }
+  .gcard:hover .gcard-nav { opacity: 1; }
+  .gcard-nav:hover { background: var(--white); }
+  .gcard-prev { left: 0.4rem; }
+  .gcard-next { right: 0.4rem; }
+  .gcard-dots { position: absolute; bottom: 0.45rem; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 2; }
+  .gcard-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(237,242,248,0.45); transition: background 0.2s; }
+  .gcard-dot.active { background: var(--white); }
+
+  .gcard-body { padding: 1.25rem; }
+  .gcard-body h3 { font-size: 1.05rem; font-weight: 600; font-family: 'Cormorant Garamond', serif; margin-bottom: 0.4rem; }
+  .gcard-body p { font-size: 0.82rem; color: var(--text-2); line-height: 1.6; margin-bottom: 0.75rem; }
+  .gcard-inspire-btn { display: inline-block; font-size: 0.75rem; font-weight: 600; color: var(--accent); letter-spacing: 0.02em; transition: opacity 0.2s; }
+  .gcard-inspire-btn:hover { opacity: 0.7; }
+
+  .gallery-skeleton { background: linear-gradient(90deg, var(--bg2) 25%, var(--border) 50%, var(--bg2) 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 16px; aspect-ratio: 3/4; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .gallery-empty { text-align: center; padding: 5rem 2rem; color: var(--text-2); font-style: italic; }
+
+  /* CTA */
+  .cta-section { background: var(--dark); }
+  .cta-card { text-align: center; max-width: 560px; margin: 0 auto; }
+  .cta-card h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); margin-bottom: 1rem; color: #EDF2F8; }
+  .cta-card p { font-size: 0.95rem; color: rgba(237,242,248,0.6); margin-bottom: 2rem; line-height: 1.7; }
+
+  @media (max-width: 700px) { .gallery-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .gallery-grid { grid-template-columns: 1fr; } }
+</style>

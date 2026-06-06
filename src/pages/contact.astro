@@ -148,17 +148,25 @@ import Footer from '../components/Footer.astro';
   const success = document.getElementById('success-msg');
 
   // Pré-remplir si un produit est passé en URL
-  const produit = new URLSearchParams(window.location.search).get('produit');
+  const params      = new URLSearchParams(window.location.search);
+  const produit     = params.get('produit');
+  const inspiration = params.get('inspiration');
+
   if (produit) {
     const desc = document.getElementById('description');
     if (desc) desc.value = `Commande pour : ${produit}\n\n`;
-    const typeEl = document.getElementById('type');
-    // Focus sur le champ description pour que l'utilisateur continue
     desc?.focus();
-    // Afficher une bannière
     const banner = document.createElement('div');
     banner.className = 'prefill-banner';
     banner.innerHTML = `✨ Commande pré-remplie pour <strong>${produit}</strong>`;
+    form?.prepend(banner);
+  } else if (inspiration) {
+    const desc = document.getElementById('description');
+    if (desc) desc.value = `Je suis intéressé·e par une création similaire à : ${inspiration}\n\n`;
+    desc?.focus();
+    const banner = document.createElement('div');
+    banner.className = 'prefill-banner';
+    banner.innerHTML = `✨ Inspiration : <strong>${inspiration}</strong> — décris ce que tu souhaites ci-dessous !`;
     form?.prepend(banner);
   }
 

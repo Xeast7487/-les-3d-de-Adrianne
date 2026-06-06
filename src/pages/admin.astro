@@ -26,6 +26,7 @@ import Footer from '../components/Footer.astro';
         <!-- Tabs -->
         <div class="admin-tabs">
           <button class="tab-btn active" data-tab="galerie">🖼️ Galerie</button>
+          <button class="tab-btn" data-tab="realisations">🎨 Réalisations</button>
           <button class="tab-btn" data-tab="commandes">📦 Commandes</button>
           <button id="logout" class="btn-outline" style="margin-left:auto">Déconnexion</button>
         </div>
@@ -123,6 +124,91 @@ import Footer from '../components/Footer.astro';
           <p>Aucune création pour l'instant. Clique sur « Ajouter une création » pour commencer !</p>
         </div>
         </div><!-- fin tab-galerie -->
+
+        <!-- ═══ TAB RÉALISATIONS ═══ -->
+        <div id="tab-realisations" class="tab-content" style="display:none">
+        <div class="admin-top">
+          <div>
+            <h1>Réalisations</h1>
+            <p class="admin-sub">Photos de tes créations passées — non disponibles à la vente</p>
+          </div>
+          <button id="open-real" class="btn-primary">+ Ajouter une réalisation</button>
+        </div>
+
+        <!-- Modal réalisation -->
+        <div id="real-modal-overlay" class="modal-overlay" style="display:none">
+          <div class="modal">
+            <div class="modal-head">
+              <h3 id="real-modal-title">Nouvelle réalisation</h3>
+              <button id="real-modal-close" class="modal-x">×</button>
+            </div>
+            <form id="real-form">
+              <input type="hidden" id="r-edit-id" />
+
+              <div class="mform-row">
+                <div class="mfield">
+                  <label>Nom <span class="req">*</span></label>
+                  <input type="text" id="r-name" placeholder="ex: Figurine Dragon Blanc" required />
+                </div>
+                <div class="mfield">
+                  <label>Catégorie <span class="req">*</span></label>
+                  <select id="r-cat" required>
+                    <option value="" disabled selected>Choisir…</option>
+                    <option>Figurines</option>
+                    <option>Déco</option>
+                    <option>Utilitaires</option>
+                    <option>Cadeaux</option>
+                    <option>Divers</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mfield">
+                <label>Description <span class="opt">(optionnel)</span></label>
+                <textarea id="r-desc" rows="3" placeholder="Décris la pièce, le contexte, le matériau utilisé…"></textarea>
+              </div>
+
+              <div class="mfield mfield-check">
+                <label class="check-lbl">
+                  <input type="checkbox" id="r-featured" />
+                  <span>⭐ Mettre en avant (coup de cœur)</span>
+                </label>
+              </div>
+
+              <!-- Upload photos -->
+              <div class="mfield">
+                <label>Photos <span class="opt">(plusieurs possibles)</span></label>
+                <div id="real-drop-zone" class="drop-zone">
+                  <div id="real-drop-inner">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <p>Glisse des photos ici ou <label for="real-file-input" class="file-link">clique pour choisir</label></p>
+                    <p class="drop-hint">JPG, PNG, WEBP · Max 5 Mo par photo · Plusieurs photos possibles</p>
+                  </div>
+                  <div id="real-photos-preview" class="photos-preview" style="display:none"></div>
+                </div>
+                <input type="file" id="real-file-input" accept="image/*" multiple style="display:none" />
+                <div id="real-upload-progress" style="display:none" class="progress-wrap">
+                  <div id="real-progress-bar" class="progress-bar"></div>
+                  <span id="real-progress-label">0%</span>
+                </div>
+              </div>
+
+              <div class="modal-foot">
+                <button type="button" id="real-cancel-btn" class="btn-outline">Annuler</button>
+                <button type="submit" id="real-save-btn" class="btn-primary">
+                  <span id="real-save-text">Enregistrer</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Liste des réalisations -->
+        <div id="real-list" class="prints-list"></div>
+        <div id="real-empty" style="display:none" class="list-empty">
+          <p>Aucune réalisation pour l'instant. Clique sur « Ajouter une réalisation » pour commencer !</p>
+        </div>
+        </div><!-- fin tab-realisations -->
 
         <!-- ═══ TAB COMMANDES ═══ -->
         <div id="tab-commandes" class="tab-content" style="display:none">
@@ -227,6 +313,20 @@ import { createClient } from '@supabase/supabase-js';
    -- Multi-photos (à exécuter une seule fois) :
    ALTER TABLE public.adrianne_prints ADD COLUMN IF NOT EXISTS photo_urls TEXT[] DEFAULT '{}';
    UPDATE public.adrianne_prints SET photo_urls = ARRAY[photo_url] WHERE photo_url != '' AND (photo_urls IS NULL OR photo_urls = '{}');
+
+   -- Réalisations (à exécuter une seule fois) :
+   CREATE TABLE IF NOT EXISTS public.adrianne_realisations (
+     id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+     name        TEXT        NOT NULL,
+     description TEXT        DEFAULT '',
+     category    TEXT        NOT NULL DEFAULT 'Divers',
+     photo_url   TEXT        DEFAULT '',
+     photo_urls  TEXT[]      DEFAULT '{}',
+     featured    BOOLEAN     DEFAULT false,
+     created_at  TIMESTAMPTZ DEFAULT NOW()
+   );
+   ALTER TABLE public.adrianne_realisations ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "open" ON public.adrianne_realisations FOR ALL USING (true) WITH CHECK (true);
 
    -- Visites journalières (à exécuter une seule fois) :
    CREATE TABLE IF NOT EXISTS public.daily_visits (
@@ -484,8 +584,180 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
     if (btn.dataset.tab === 'commandes') loadOrders();
+    if (btn.dataset.tab === 'realisations') loadRealisations();
   });
 });
+
+// ── Réalisations ──────────────────────────────────────────
+const realOverlay = document.getElementById('real-modal-overlay');
+let realSelectedFiles = [];
+let realExistingUrls  = [];
+let editingRealId     = null;
+
+function openRealModal(item = null) {
+  editingRealId = item?.id || null;
+  document.getElementById('real-modal-title').textContent = item ? 'Modifier la réalisation' : 'Nouvelle réalisation';
+  document.getElementById('r-name').value     = item?.name || '';
+  document.getElementById('r-cat').value      = item?.category || '';
+  document.getElementById('r-desc').value     = item?.description || '';
+  document.getElementById('r-featured').checked = item?.featured || false;
+  realSelectedFiles = [];
+  realExistingUrls  = item?.photo_urls?.length
+    ? [...item.photo_urls]
+    : (item?.photo_url ? [item.photo_url] : []);
+  renderRealPreviews();
+  realOverlay.style.display = 'flex';
+}
+function closeRealModal() { realOverlay.style.display = 'none'; realSelectedFiles = []; realExistingUrls = []; }
+
+function renderRealPreviews() {
+  const container = document.getElementById('real-photos-preview');
+  const dropInner = document.getElementById('real-drop-inner');
+  container.innerHTML = '';
+  const total = realExistingUrls.length + realSelectedFiles.length;
+
+  realExistingUrls.forEach((url, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.innerHTML = `<img src="${url}" alt="Photo ${i+1}" /><button type="button" class="photo-thumb-remove" data-type="existing" data-index="${i}">×</button>`;
+    container.appendChild(thumb);
+  });
+  realSelectedFiles.forEach((file, i) => {
+    const url = URL.createObjectURL(file);
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb photo-thumb-new';
+    thumb.innerHTML = `<img src="${url}" alt="Nouvelle photo" /><button type="button" class="photo-thumb-remove" data-type="new" data-index="${i}">×</button>`;
+    container.appendChild(thumb);
+  });
+  container.querySelectorAll('.photo-thumb-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index);
+      if (btn.dataset.type === 'existing') realExistingUrls.splice(idx, 1);
+      else realSelectedFiles.splice(idx, 1);
+      renderRealPreviews();
+    });
+  });
+  container.style.display = total > 0 ? 'flex' : 'none';
+  dropInner.style.display  = total > 0 ? 'none' : 'flex';
+}
+
+document.getElementById('open-real').addEventListener('click', () => openRealModal());
+document.getElementById('real-modal-close').addEventListener('click', closeRealModal);
+document.getElementById('real-cancel-btn').addEventListener('click', closeRealModal);
+realOverlay.addEventListener('click', e => { if (e.target === realOverlay) closeRealModal(); });
+
+const realFileInput = document.getElementById('real-file-input');
+const realDropZone  = document.getElementById('real-drop-zone');
+
+realFileInput.addEventListener('change', e => { Array.from(e.target.files).forEach(f => handleRealFile(f)); realFileInput.value = ''; });
+realDropZone.addEventListener('dragover', e => { e.preventDefault(); realDropZone.classList.add('drag-over'); });
+realDropZone.addEventListener('dragleave', () => realDropZone.classList.remove('drag-over'));
+realDropZone.addEventListener('drop', e => { e.preventDefault(); realDropZone.classList.remove('drag-over'); Array.from(e.dataTransfer.files).forEach(f => handleRealFile(f)); });
+
+function handleRealFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Image trop grande. Max 5 Mo.'); return; }
+  realSelectedFiles.push(file);
+  renderRealPreviews();
+}
+
+document.getElementById('real-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const saveBtn  = document.getElementById('real-save-btn');
+  const saveText = document.getElementById('real-save-text');
+  saveBtn.disabled = true; saveText.textContent = 'Enregistrement…';
+
+  try {
+    const prog = document.getElementById('real-upload-progress');
+    const bar  = document.getElementById('real-progress-bar');
+    const lbl  = document.getElementById('real-progress-label');
+    let newUrls = [];
+    if (realSelectedFiles.length > 0) {
+      prog.style.display = 'flex';
+      for (let i = 0; i < realSelectedFiles.length; i++) {
+        bar.style.width = `${Math.round((i / realSelectedFiles.length) * 100)}%`;
+        lbl.textContent = `${i + 1} / ${realSelectedFiles.length}…`;
+        const file = realSelectedFiles[i];
+        const ext  = file.name.split('.').pop().toLowerCase();
+        const name = `real-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error } = await sb.storage.from('adrianne-prints').upload(name, file, { contentType: file.type });
+        if (error) { prog.style.display = 'none'; throw error; }
+        const { data: { publicUrl } } = sb.storage.from('adrianne-prints').getPublicUrl(name);
+        newUrls.push(publicUrl);
+      }
+      bar.style.width = '100%'; lbl.textContent = '100%';
+      setTimeout(() => { prog.style.display = 'none'; }, 600);
+    }
+
+    const allUrls = [...realExistingUrls, ...newUrls];
+    const payload = {
+      name:        document.getElementById('r-name').value.trim(),
+      category:    document.getElementById('r-cat').value,
+      description: document.getElementById('r-desc').value.trim(),
+      featured:    document.getElementById('r-featured').checked,
+      photo_url:   allUrls[0] || '',
+      photo_urls:  allUrls,
+    };
+
+    if (editingRealId) {
+      await sb.from('adrianne_realisations').update(payload).eq('id', editingRealId);
+    } else {
+      await sb.from('adrianne_realisations').insert(payload);
+    }
+
+    closeRealModal(); loadRealisations();
+  } catch (err) { alert('Erreur : ' + err.message); }
+  finally { saveBtn.disabled = false; saveText.textContent = 'Enregistrer'; }
+});
+
+async function loadRealisations() {
+  const { data: items } = await sb.from('adrianne_realisations').select('*').order('created_at', { ascending: false });
+  const list  = document.getElementById('real-list');
+  const empty = document.getElementById('real-empty');
+
+  if (!items?.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = '';
+
+  items.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'print-row';
+    const photoCount = p.photo_urls?.length || (p.photo_url ? 1 : 0);
+    row.innerHTML = `
+      <div class="pr-photo">
+        ${p.photo_url ? `<img src="${p.photo_url}" alt="${p.name}" />` : `<div class="pr-no-photo">🎨</div>`}
+        ${photoCount > 1 ? `<span class="pr-photo-count">${photoCount}</span>` : ''}
+      </div>
+      <div class="pr-info">
+        <div class="pr-top">
+          <span class="pr-name">${p.name}</span>
+          ${p.featured ? '<span class="pr-star">⭐</span>' : ''}
+          <span class="real-tag">Non à vendre</span>
+        </div>
+        <span class="pr-meta">${p.category}</span>
+        ${p.description ? `<p class="pr-desc">${p.description}</p>` : ''}
+      </div>
+      <div class="pr-actions">
+        <button class="action-btn edit-real-btn" data-id="${p.id}">✏️ Modifier</button>
+        <button class="action-btn del-real-btn" data-id="${p.id}">🗑️ Supprimer</button>
+      </div>`;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll('.edit-real-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data } = await sb.from('adrianne_realisations').select('*').eq('id', btn.dataset.id).single();
+      openRealModal(data);
+    });
+  });
+  list.querySelectorAll('.del-real-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Supprimer cette réalisation ?')) return;
+      await sb.from('adrianne_realisations').delete().eq('id', btn.dataset.id);
+      loadRealisations();
+    });
+  });
+}
 
 // ── Commandes ─────────────────────────────────────────────
 const orderOverlay = document.getElementById('order-modal-overlay');
@@ -700,6 +972,8 @@ async function loadOrders() {
   .order-link-row { margin-top: 0.3rem; }
   .order-track-link { font-size: 0.75rem; color: var(--accent); font-weight: 500; transition: opacity 0.2s; }
   .order-track-link:hover { opacity: 0.7; }
+
+  .real-tag { font-size: 0.62rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(13,27,46,0.07); color: var(--text-2); letter-spacing: 0.04em; }
 
   @media (max-width: 600px) { .mform-row { grid-template-columns: 1fr; } .pr-actions { flex-direction: column; } }
 </style>
