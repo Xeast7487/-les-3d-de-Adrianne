@@ -1,0 +1,34 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+<Layout title="Paiement réussi — Les 3D d'Adrianne">
+  <Nav />
+  <main>
+    <section class="success-section">
+      <div class="container">
+        <div class="success-card">
+          <div class="success-icon">✓</div>
+          <h1>Merci pour votre commande !</h1>
+          <p>Votre paiement a été accepté avec succès. Adrianne vous contactera bientôt pour confirmer les détails de votre commande et l'expédition.</p>
+          <p class="sub">Un courriel de confirmation vous a été envoyé par Stripe.</p>
+          <a href="/" class="btn-primary">Retour à l'accueil</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  main { padding-top: 68px; min-height: 80vh; display: flex; align-items: center; }
+  .success-section { width: 100%; padding: 5rem 2rem; }
+  .success-card { text-align: center; max-width: 500px; margin: 0 auto; background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 3.5rem 2.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+  .success-icon { width: 72px; height: 72px; border-radius: 50%; background: #dcfce7; color: #16a34a; font-size: 2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-weight: 700; }
+  .success-card h1 { font-size: 1.6rem; margin-bottom: 1rem; }
+  .success-card p { font-size: 0.925rem; color: var(--text-2); line-height: 1.75; margin-bottom: 0.75rem; }
+  .sub { font-size: 0.8rem; color: rgba(13,27,46,0.4); }
+  .btn-primary { display: inline-flex; align-items: center; background: var(--accent); color: var(--white); padding: 0.75rem 2rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; margin-top: 1.5rem; transition: background 0.2s, transform 0.2s; }
+  .btn-primary:hover { background: var(--accent-d); transform: translateY(-2px); }
+</style>

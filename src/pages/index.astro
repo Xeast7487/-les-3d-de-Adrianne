@@ -158,7 +158,10 @@ function renderGallery(prints) {
         ${p.description ? `<p>${p.description}</p>` : ''}
         <div class="gcard-foot">
           ${p.price_range ? `<span class="gcard-price">À partir de ${p.price_range}</span>` : ''}
-          <a href="/contact?produit=${encodeURIComponent(p.name)}" class="gcard-btn">Commander</a>
+          ${p.price_cents
+            ? `<button class="gcard-btn gcard-buy" data-name="${p.name.replace(/"/g, '&quot;')}" data-price="${p.price_cents}" data-image="${(photos[0] || '').replace(/"/g, '&quot;')}" data-id="${p.id}">Acheter</button>`
+            : `<a href="/contact?produit=${encodeURIComponent(p.name)}" class="gcard-btn">Commander</a>`
+          }
         </div>
       </div>`;
 
@@ -176,6 +179,32 @@ function renderGallery(prints) {
     }
 
     grid.appendChild(card);
+  });
+
+  grid.querySelectorAll('.gcard-buy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.textContent = '…';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: btn.dataset.name,
+            price_cents: parseInt(btn.dataset.price),
+            image_url: btn.dataset.image || undefined,
+            product_id: btn.dataset.id,
+          }),
+        });
+        const { url, error } = await res.json();
+        if (url) { window.location.href = url; }
+        else { throw new Error(error || 'Erreur de paiement'); }
+      } catch (e) {
+        alert(e.message);
+        btn.textContent = 'Acheter';
+        btn.disabled = false;
+      }
+    });
   });
 }
 
@@ -283,6 +312,9 @@ loadPrints();
   .gcard-price { font-size: 0.85rem; font-weight: 600; color: var(--accent); font-family: 'Cormorant Garamond', serif; font-style: italic; }
   .gcard-btn { background: var(--accent-l); color: var(--accent); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; transition: background 0.2s; letter-spacing: 0.03em; }
   .gcard-btn:hover { background: var(--accent); color: var(--white); }
+  .gcard-buy { background: var(--accent); color: var(--white); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .gcard-buy:hover { background: var(--accent-d); }
+  .gcard-buy:disabled { opacity: 0.6; cursor: not-allowed; }
   .gallery-skeleton { background: linear-gradient(90deg, var(--bg2) 25%, var(--border) 50%, var(--bg2) 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 16px; aspect-ratio: 3/4; }
   @keyframes shimmer { to { background-position: -200% 0; } }
   .gallery-empty { text-align: center; padding: 5rem 2rem; color: var(--text-2); font-style: italic; }
