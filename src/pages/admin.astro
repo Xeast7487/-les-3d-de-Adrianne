@@ -83,8 +83,9 @@ import Footer from '../components/Footer.astro';
                   <input type="text" id="f-price" placeholder="ex: 15 $ – 25 $" />
                 </div>
                 <div class="mfield">
-                  <label>Prix de vente $ <span class="opt">(Stripe — laisser vide si pas à vendre)</span></label>
-                  <input type="number" id="f-price-sell" placeholder="ex: 25.00" step="0.01" min="0.50" />
+                  <label>💳 Prix de vente Stripe $ <span class="req">*</span> <span class="opt">(active le bouton Acheter)</span></label>
+                  <input type="number" id="f-price-sell" placeholder="ex: 14.99 pour 14,99 $" step="0.01" min="0.50" />
+                  <p class="field-hint">Entre le prix en dollars (ex: 14.99). Laisser vide si l'item n'est pas à vendre directement.</p>
                 </div>
               </div>
 
@@ -504,9 +505,11 @@ form.addEventListener('submit', async e => {
     };
 
     if (editingId) {
-      await sb.from('adrianne_prints').update(payload).eq('id', editingId);
+      const { error: updateErr } = await sb.from('adrianne_prints').update(payload).eq('id', editingId);
+      if (updateErr) throw updateErr;
     } else {
-      await sb.from('adrianne_prints').insert(payload);
+      const { error: insertErr } = await sb.from('adrianne_prints').insert(payload);
+      if (insertErr) throw insertErr;
     }
 
     closeModal(); loadPrints();
@@ -562,6 +565,9 @@ async function loadPrints() {
           ${p.featured ? '<span class="pr-star">⭐</span>' : ''}
         </div>
         <span class="pr-meta">${p.category}${p.price_range ? ' · ' + p.price_range : ''}</span>
+        ${p.price_cents
+          ? `<span class="pr-stripe-chip">💳 ${(p.price_cents / 100).toFixed(2)} $</span>`
+          : `<span class="pr-no-stripe">Pas de vente directe</span>`}
         ${p.description ? `<p class="pr-desc">${p.description}</p>` : ''}
       </div>
       <div class="pr-actions">
@@ -987,6 +993,10 @@ async function loadOrders() {
   .order-track-link:hover { opacity: 0.7; }
 
   .real-tag { font-size: 0.62rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(13,27,46,0.07); color: var(--text-2); letter-spacing: 0.04em; }
+
+  .pr-stripe-chip { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(42,92,180,0.1); color: var(--accent); margin-top: 0.25rem; }
+  .pr-no-stripe { display: inline-block; font-size: 0.68rem; color: rgba(13,27,46,0.35); margin-top: 0.25rem; font-style: italic; }
+  .field-hint { font-size: 0.72rem; color: var(--text-2); margin-top: 0.2rem; line-height: 1.4; }
 
   @media (max-width: 600px) { .mform-row { grid-template-columns: 1fr; } .pr-actions { flex-direction: column; } }
 </style>
