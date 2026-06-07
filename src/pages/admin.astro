@@ -1012,9 +1012,11 @@ document.getElementById('real-form').addEventListener('submit', async e => {
     };
 
     if (editingRealId) {
-      await sb.from('adrianne_realisations').update(payload).eq('id', editingRealId);
+      const { error: updateErr } = await sb.from('adrianne_realisations').update(payload).eq('id', editingRealId);
+      if (updateErr) throw updateErr;
     } else {
-      await sb.from('adrianne_realisations').insert(payload);
+      const { error: insertErr } = await sb.from('adrianne_realisations').insert(payload);
+      if (insertErr) throw insertErr;
     }
 
     closeRealModal(); loadRealisations();
