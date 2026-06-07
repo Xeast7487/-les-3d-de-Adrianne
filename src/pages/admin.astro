@@ -31,7 +31,6 @@ import Footer from '../components/Footer.astro';
           <button class="tab-btn" data-tab="filaments">🧵 Filaments</button>
           <button class="tab-btn" data-tab="clients">👤 Clients</button>
           <button class="tab-btn" data-tab="factures">🧾 Factures</button>
-          <a href="/portail" target="_blank" class="btn-outline" style="margin-left:0.5rem;text-decoration:none">Portail ↗</a>
           <button id="logout" class="btn-outline" style="margin-left:auto">Déconnexion</button>
         </div>
 
@@ -368,7 +367,7 @@ import Footer from '../components/Footer.astro';
           <div class="admin-top">
             <div>
               <h1>Clients</h1>
-              <p class="admin-sub">Gérez vos clients et leurs accès portail</p>
+              <p class="admin-sub">Gérez vos clients</p>
             </div>
             <button id="open-client" class="btn-primary">+ Nouveau client</button>
           </div>
@@ -417,11 +416,6 @@ import Footer from '../components/Footer.astro';
           <div class="mfield"><label>Courriel <span class="req">*</span></label><input type="email" id="c-email" placeholder="marie@exemple.com" required /></div>
           <div class="mfield"><label>Téléphone <span class="opt">(optionnel)</span></label><input type="tel" id="c-phone" placeholder="514-000-0000" /></div>
         </div>
-        <div class="mfield">
-          <label>Mot de passe portail <span class="req">*</span></label>
-          <input type="text" id="c-password" placeholder="Mot de passe pour accéder au portail" required />
-          <small class="field-hint">Le client utilisera ce mot de passe sur les3darianne.xyz/portail</small>
-        </div>
         <div class="modal-foot">
           <button type="button" id="client-cancel" class="btn-outline">Annuler</button>
           <button type="submit" id="client-save" class="btn-primary">Enregistrer le client</button>
@@ -442,13 +436,33 @@ import Footer from '../components/Footer.astro';
         <div class="mform-row">
           <div class="mfield">
             <label>Client <span class="req">*</span></label>
-            <select id="inv-client" required><option value="">Choisir un client...</option></select>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              <select id="inv-client" required style="flex:1"><option value="">Choisir un client...</option></select>
+              <button type="button" id="inv-new-client-btn" class="btn-outline" style="white-space:nowrap;flex-shrink:0;padding:0.45rem 0.85rem;font-size:0.82rem">+ Nouveau client</button>
+            </div>
           </div>
           <div class="mfield">
             <label>Numéro de facture <span class="req">*</span></label>
             <input type="text" id="inv-number" placeholder="ADR-202601-001" required />
           </div>
         </div>
+        <!-- Formulaire rapide nouveau client -->
+        <div id="inv-quick-client" style="display:none;background:var(--surface-2,#f5f5f5);padding:1rem;border-radius:10px;border:1px solid var(--border,#e0e0e0);margin-bottom:0.25rem">
+          <p style="font-weight:600;margin:0 0 0.75rem;font-size:0.9rem">Créer un nouveau client</p>
+          <div class="mform-row">
+            <div class="mfield"><label>Nom <span class="req">*</span></label><input type="text" id="qc-name" placeholder="Marie Tremblay" /></div>
+            <div class="mfield"><label>Courriel</label><input type="email" id="qc-email" placeholder="marie@exemple.com" /></div>
+          </div>
+          <div class="mform-row">
+            <div class="mfield"><label>Entreprise <span class="opt">(optionnel)</span></label><input type="text" id="qc-company" placeholder="Optionnel" /></div>
+            <div class="mfield"><label>Téléphone <span class="opt">(optionnel)</span></label><input type="tel" id="qc-phone" placeholder="514-000-0000" /></div>
+          </div>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem">
+            <button type="button" id="qc-cancel" class="btn-outline" style="padding:0.4rem 1rem;font-size:0.82rem">Annuler</button>
+            <button type="button" id="qc-save" class="btn-primary" style="padding:0.4rem 1rem;font-size:0.82rem">Créer le client</button>
+          </div>
+        </div>
+
         <div class="mfield">
           <label>Description <span class="req">*</span></label>
           <input type="text" id="inv-title" placeholder="ex: Impression 3D personnalisée" required />
@@ -1253,10 +1267,6 @@ function openClientModal(client = null) {
   document.getElementById('c-email').value   = client?.email   || '';
   document.getElementById('c-company').value = client?.company || '';
   document.getElementById('c-phone').value   = client?.phone   || '';
-  const pwdEl = document.getElementById('c-password');
-  pwdEl.value = '';
-  pwdEl.required     = !client;
-  pwdEl.placeholder  = client ? 'Laisser vide pour conserver' : 'Mot de passe pour le portail';
   clientModalOverlay.style.display = 'flex';
 }
 function closeClientModal() { clientModalOverlay.style.display = 'none'; }
@@ -1271,14 +1281,12 @@ document.getElementById('client-form').addEventListener('submit', async e => {
   const saveBtn = document.getElementById('client-save');
   saveBtn.disabled = true; saveBtn.textContent = 'Enregistrement…';
   const editId = document.getElementById('c-edit-id').value;
-  const pwd    = document.getElementById('c-password').value;
   const payload: any = {
     name:    document.getElementById('c-name').value.trim(),
     email:   document.getElementById('c-email').value.trim().toLowerCase(),
     company: document.getElementById('c-company').value.trim(),
     phone:   document.getElementById('c-phone').value.trim(),
   };
-  if (pwd) payload.password_hash = await hashPwd(pwd);
   try {
     if (editId) await sb.from('adrianne_clients').update(payload).eq('id', editId);
     else        await sb.from('adrianne_clients').insert(payload);
@@ -1326,7 +1334,6 @@ function renderClients() {
         <span class="pr-meta">${c.email}${c.company ? ' · ' + c.company : ''}${c.phone ? ' · ' + c.phone : ''}</span>
       </div>
       <div class="pr-actions">
-        <a href="/portail" target="_blank" class="action-btn">↗ Portail</a>
         <button class="action-btn edit-client-btn" data-id="${c.id}">✏️ Modifier</button>
         <button class="action-btn del-client-btn" data-id="${c.id}">🗑️ Supprimer</button>
       </div>`;
@@ -1372,6 +1379,8 @@ function openInvoiceModal(inv: any = null) {
     (document.getElementById('inv-due') as HTMLInputElement).value = due.toISOString().split('T')[0];
   }
   renderInvItems();
+  const qc = document.getElementById('inv-quick-client');
+  if (qc) qc.style.display = 'none';
   invoiceModalOverlay.style.display = 'flex';
 }
 function closeInvoiceModal() { invoiceModalOverlay.style.display = 'none'; }
@@ -1381,6 +1390,43 @@ document.getElementById('invoice-modal-close').addEventListener('click', closeIn
 document.getElementById('invoice-cancel').addEventListener('click', closeInvoiceModal);
 invoiceModalOverlay.addEventListener('click', e => { if (e.target === invoiceModalOverlay) closeInvoiceModal(); });
 document.getElementById('add-inv-item').addEventListener('click', () => { invItems.push({ desc: '', qty: 1, price: 0 }); renderInvItems(); });
+
+// Formulaire rapide création client depuis modale facture
+const qcPanel = document.getElementById('inv-quick-client');
+document.getElementById('inv-new-client-btn').addEventListener('click', () => {
+  const visible = qcPanel.style.display !== 'none';
+  qcPanel.style.display = visible ? 'none' : 'block';
+  if (!visible) {
+    (document.getElementById('qc-name') as HTMLInputElement).value = '';
+    (document.getElementById('qc-email') as HTMLInputElement).value = '';
+    (document.getElementById('qc-company') as HTMLInputElement).value = '';
+    (document.getElementById('qc-phone') as HTMLInputElement).value = '';
+    (document.getElementById('qc-name') as HTMLInputElement).focus();
+  }
+});
+document.getElementById('qc-cancel').addEventListener('click', () => { qcPanel.style.display = 'none'; });
+document.getElementById('qc-save').addEventListener('click', async () => {
+  const name  = (document.getElementById('qc-name')  as HTMLInputElement).value.trim();
+  const email = (document.getElementById('qc-email') as HTMLInputElement).value.trim().toLowerCase();
+  if (!name) { alert('Le nom du client est requis.'); return; }
+  const saveBtn = document.getElementById('qc-save') as HTMLButtonElement;
+  saveBtn.disabled = true; saveBtn.textContent = 'Création…';
+  try {
+    const payload: any = {
+      name,
+      email: email || null,
+      company: (document.getElementById('qc-company') as HTMLInputElement).value.trim() || null,
+      phone:   (document.getElementById('qc-phone')   as HTMLInputElement).value.trim() || null,
+    };
+    const { data, error } = await sb.from('adrianne_clients').insert(payload).select().single();
+    if (error) throw error;
+    await loadClients();
+    const sel = document.getElementById('inv-client') as HTMLSelectElement;
+    if (data?.id) sel.value = data.id;
+    qcPanel.style.display = 'none';
+  } catch (err: any) { alert('Erreur : ' + err.message); }
+  finally { saveBtn.disabled = false; saveBtn.textContent = 'Créer le client'; }
+});
 
 function renderInvItems() {
   const el = document.getElementById('inv-items-rows'); if (!el) return;
