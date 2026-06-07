@@ -335,7 +335,25 @@ import Footer from '../components/Footer.astro';
                 </div>
                 <div class="mfield">
                   <label>Couleur <span class="req">*</span></label>
-                  <div class="color-pick-row">
+                  <div class="preset-colors-grid">
+                    <button type="button" class="preset-color-btn" data-hex="#FFFFFF" data-name="Blanc" title="Blanc" style="background:#FFFFFF"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#F5E6C8" data-name="Naturel" title="Naturel" style="background:#F5E6C8"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#CCCCCC" data-name="Gris clair" title="Gris clair" style="background:#CCCCCC"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#888888" data-name="Gris" title="Gris" style="background:#888888"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#1C1C1C" data-name="Noir" title="Noir" style="background:#1C1C1C"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#E62020" data-name="Rouge" title="Rouge" style="background:#E62020"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#FF6B00" data-name="Orange" title="Orange" style="background:#FF6B00"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#FFD700" data-name="Jaune" title="Jaune" style="background:#FFD700"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#22AA44" data-name="Vert" title="Vert" style="background:#22AA44"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#006400" data-name="Vert foncé" title="Vert foncé" style="background:#006400"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#00BFFF" data-name="Bleu clair" title="Bleu clair" style="background:#00BFFF"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#1E60FF" data-name="Bleu" title="Bleu" style="background:#1E60FF"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#003380" data-name="Bleu marine" title="Bleu marine" style="background:#003380"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#8A2BE2" data-name="Violet" title="Violet" style="background:#8A2BE2"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#FF69B4" data-name="Rose" title="Rose" style="background:#FF69B4"></button>
+                    <button type="button" class="preset-color-btn" data-hex="#8B4513" data-name="Marron" title="Marron" style="background:#8B4513"></button>
+                  </div>
+                  <div class="color-pick-row" style="margin-top:0.5rem">
                     <input type="color" id="fil-color" value="#888888" class="color-picker-input" />
                     <input type="text" id="fil-color-hex" value="#888888" placeholder="#RRGGBB" maxlength="7" />
                     <div id="fil-color-preview" class="color-preview-swatch" style="background:#888888"></div>
@@ -1199,12 +1217,22 @@ function updateColorPreview(hex) {
   filColorPrev.style.background = hex;
   filColorInput.value = hex;
   filColorHex.value   = hex;
+  document.querySelectorAll('.preset-color-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.hex.toLowerCase() === hex.toLowerCase());
+  });
 }
 filColorInput.addEventListener('input', () => updateColorPreview(filColorInput.value));
 filColorHex.addEventListener('input', () => {
   const v = filColorHex.value;
   if (/^#[0-9a-fA-F]{6}$/.test(v)) updateColorPreview(v);
   else filColorPrev.style.background = v;
+});
+document.querySelectorAll('.preset-color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    updateColorPreview(btn.dataset.hex);
+    const nameField = document.getElementById('fil-name');
+    if (!nameField.value.trim()) nameField.value = btn.dataset.name;
+  });
 });
 
 function openFilModal(item = null) {
@@ -1725,6 +1753,10 @@ async function loadFilaments() {
   .toggle-avail-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; border-radius: 6px; flex-shrink: 0; }
   .toggle-avail-btn:hover { background: var(--bg2); }
   .fil-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+  .preset-colors-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.25rem; }
+  .preset-color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); cursor: pointer; padding: 0; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; flex-shrink: 0; }
+  .preset-color-btn:hover { transform: scale(1.2); border-color: var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  .preset-color-btn.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,92,180,0.3); transform: scale(1.15); }
   .color-pick-row { display: flex; align-items: center; gap: 0.6rem; }
   .color-picker-input { width: 44px; height: 40px; padding: 2px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; background: var(--bg); flex-shrink: 0; }
   .color-pick-row input[type="text"] { flex: 1; }
