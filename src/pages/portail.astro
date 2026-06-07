@@ -1,0 +1,499 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Portail client — Les 3D d'Adrianne">
+<main>
+
+  <!-- ─── CONNEXION ──────────────────────────────────────── -->
+  <div id="login-screen" class="login-wrap">
+    <div class="login-left">
+      <div class="ll-content">
+        <div class="ll-logo">
+          <div class="ll-logo-circle">A</div>
+          <div>
+            <span class="ll-brand-main">Les 3D d'Adrianne</span>
+            <span class="ll-brand-sub">Impressions 3D personnalisées</span>
+          </div>
+        </div>
+        <h1>Votre espace client</h1>
+        <p>Consultez vos factures, suivez vos projets et téléchargez vos documents en toute sécurité.</p>
+        <div class="ll-perks">
+          <div class="llp"><span class="llp-icon">📄</span><span>Accès à toutes vos factures</span></div>
+          <div class="llp"><span class="llp-icon">🔒</span><span>Espace sécurisé et privé</span></div>
+          <div class="llp"><span class="llp-icon">🖨️</span><span>Impression et export PDF</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="login-right">
+      <div class="login-form-wrap">
+        <div class="login-form-head">
+          <h2>Connexion</h2>
+          <p>Entrez vos identifiants fournis par Les 3D d'Adrianne</p>
+        </div>
+        <form id="login-form">
+          <div class="lf-field">
+            <label>Adresse courriel</label>
+            <div class="lf-input-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="login-email" placeholder="vous@exemple.com" required autocomplete="email" />
+            </div>
+          </div>
+          <div class="lf-field">
+            <label>Mot de passe</label>
+            <div class="lf-input-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="login-pwd" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+          </div>
+          <p id="login-err" class="lf-err"></p>
+          <button type="submit" class="lf-btn" id="login-btn">
+            <span>Se connecter</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </form>
+        <a href="/" class="lf-back">← Retour au site</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PORTAIL ─────────────────────────────────────────── -->
+  <div id="portal-app" style="display:none" class="portal-app">
+
+    <!-- Header -->
+    <header class="portal-header">
+      <div class="ph-inner">
+        <a href="/" class="ph-logo">
+          <div class="ph-logo-circle">A</div>
+          <div>
+            <span class="ph-brand-main">Les 3D d'Adrianne</span>
+            <span class="ph-brand-sub">Impressions 3D</span>
+          </div>
+        </a>
+        <div class="ph-right">
+          <div class="ph-user-badge">
+            <div class="pub-avatar" id="pub-avatar">?</div>
+            <div class="pub-info">
+              <p class="pub-name" id="pub-name">Chargement...</p>
+              <p class="pub-company" id="pub-company"></p>
+            </div>
+          </div>
+          <button id="portal-logout" class="ph-logout">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard -->
+    <div class="portal-body">
+
+      <!-- LISTE FACTURES -->
+      <div id="portal-dashboard">
+        <div class="dash-head">
+          <h1>Mes factures</h1>
+          <p class="dash-sub" id="dash-sub">Bienvenue dans votre espace client</p>
+        </div>
+        <div class="dash-stats" id="portal-stats"></div>
+        <div id="portal-invoices" class="invoices-list"></div>
+      </div>
+
+      <!-- DÉTAIL FACTURE -->
+      <div id="invoice-detail" style="display:none" class="inv-detail-wrap">
+        <div class="inv-detail-toolbar">
+          <button id="back-to-list" class="back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Retour aux factures
+          </button>
+          <button class="print-btn" onclick="window.print()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimer / PDF
+          </button>
+        </div>
+
+        <div id="invoice-print-zone" class="inv-doc">
+          <!-- EN-TÊTE -->
+          <div class="inv-doc-top">
+            <div class="inv-doc-logo">
+              <div class="idl-circle">A</div>
+              <div>
+                <span class="inv-logo-n">Les 3D d'Adrianne</span>
+                <span class="inv-logo-s">Impressions 3D personnalisées</span>
+              </div>
+            </div>
+            <div class="inv-doc-meta">
+              <h2 class="inv-doc-title">FACTURE</h2>
+              <p id="inv-doc-number" class="inv-doc-number"></p>
+              <div id="inv-doc-status" class="inv-doc-status"></div>
+            </div>
+          </div>
+
+          <!-- PARTIES -->
+          <div class="inv-parties">
+            <div class="inv-party">
+              <p class="ip-label">De</p>
+              <p class="ip-name">Les 3D d'Adrianne</p>
+              <p class="ip-info">les3darianne.xyz</p>
+              <p class="ip-info">Québec, Canada</p>
+            </div>
+            <div class="inv-party">
+              <p class="ip-label">Facturer à</p>
+              <p class="ip-name" id="inv-client-name"></p>
+              <p class="ip-info" id="inv-client-company"></p>
+              <p class="ip-info" id="inv-client-email"></p>
+            </div>
+            <div class="inv-party">
+              <p class="ip-label">Dates</p>
+              <div class="ip-dates">
+                <div class="ipd-row"><span>Émise le</span><strong id="inv-doc-date"></strong></div>
+                <div class="ipd-row"><span>Échéance</span><strong id="inv-doc-due"></strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TITRE -->
+          <div class="inv-title-block">
+            <p class="itb-label">Objet</p>
+            <p class="itb-val" id="inv-title-display"></p>
+          </div>
+
+          <!-- LIGNES -->
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="th-center">Qté</th>
+                <th class="th-right">Prix unit.</th>
+                <th class="th-right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="inv-items-body"></tbody>
+          </table>
+
+          <!-- TOTAUX -->
+          <div class="inv-totals">
+            <div class="it-row"><span>Sous-total</span><span id="inv-t-sub"></span></div>
+            <div class="it-row it-sub" id="inv-t-tps-row"><span>TPS (5 %)</span><span id="inv-t-tps"></span></div>
+            <div class="it-row it-sub" id="inv-t-tvq-row"><span>TVQ (9,975 %)</span><span id="inv-t-tvq"></span></div>
+            <div class="it-row it-grand"><span>Total à payer</span><strong id="inv-t-total"></strong></div>
+          </div>
+
+          <!-- NOTES -->
+          <div id="inv-notes-block" class="inv-notes" style="display:none">
+            <p class="inv-notes-label">Notes</p>
+            <p id="inv-notes-text" class="inv-notes-text"></p>
+          </div>
+
+          <div class="inv-footer">Merci de votre confiance · Les 3D d'Adrianne · les3darianne.xyz</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+</Layout>
+
+<script>
+import { createClient } from '@supabase/supabase-js';
+const sb = createClient(
+  'https://gnpjilwdehxsafdqdtak.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA'
+);
+
+const fmt     = (n: number) => n.toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+const STATUS: Record<string,{label:string;cls:string}> = {
+  pending:   { label: 'En attente',  cls: 'sp-pending' },
+  paid:      { label: 'Payée',       cls: 'sp-paid'    },
+  overdue:   { label: 'En retard',   cls: 'sp-overdue' },
+  cancelled: { label: 'Annulée',     cls: 'sp-cancelled' },
+};
+
+const saved = localStorage.getItem('adrianne-portal-client');
+if (saved) showApp(JSON.parse(saved));
+
+document.getElementById('login-form')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn') as HTMLButtonElement;
+  const err = document.getElementById('login-err')!;
+  btn.disabled = true;
+  btn.querySelector('span')!.textContent = 'Connexion...';
+  err.textContent = '';
+  const email = (document.getElementById('login-email') as HTMLInputElement).value.trim().toLowerCase();
+  const pwd   = (document.getElementById('login-pwd')   as HTMLInputElement).value;
+  try {
+    const res  = await fetch('/api/adr-auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pwd }) });
+    const data = await res.json();
+    if (!res.ok) err.textContent = data.error || 'Identifiants invalides';
+    else { localStorage.setItem('adrianne-portal-client', JSON.stringify(data)); showApp(data); }
+  } catch { err.textContent = 'Erreur de connexion'; }
+  btn.disabled = false;
+  btn.querySelector('span')!.textContent = 'Se connecter';
+});
+
+document.getElementById('portal-logout')?.addEventListener('click', () => { localStorage.removeItem('adrianne-portal-client'); location.reload(); });
+document.getElementById('back-to-list')?.addEventListener('click', () => {
+  document.getElementById('invoice-detail')!.style.display = 'none';
+  document.getElementById('portal-dashboard')!.style.display = 'block';
+});
+
+async function showApp(client: any) {
+  document.getElementById('login-screen')!.style.display = 'none';
+  document.getElementById('portal-app')!.style.display   = 'block';
+
+  const avatar = client.name.charAt(0).toUpperCase();
+  const avatarEl  = document.getElementById('pub-avatar');   if (avatarEl)  avatarEl.textContent  = avatar;
+  const nameEl    = document.getElementById('pub-name');     if (nameEl)    nameEl.textContent    = client.name;
+  const compEl    = document.getElementById('pub-company');  if (compEl)    compEl.textContent    = client.company || '';
+  const subEl     = document.getElementById('dash-sub');     if (subEl)     subEl.textContent     = `Bonjour ${client.name}${client.company ? ` · ${client.company}` : ''} 👋`;
+
+  const { data: invoices } = await sb.from('adrianne_invoices').select('*').eq('client_id', client.id).order('created_at', { ascending: false });
+  const invs = invoices || [];
+  (window as any)._invoices = invs;
+  (window as any)._client   = client;
+
+  const pending = invs.filter((i:any) => i.status === 'pending').reduce((s:number, i:any) => s + parseFloat(i.total), 0);
+  const paid    = invs.filter((i:any) => i.status === 'paid').reduce((s:number, i:any) => s + parseFloat(i.total), 0);
+  const statsEl = document.getElementById('portal-stats');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="ds-card"><div class="dsc-icon dsc-blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><p class="dsc-val">${invs.length}</p><p class="dsc-lbl">Factures</p></div></div>
+    <div class="ds-card"><div class="dsc-icon dsc-amber"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><p class="dsc-val">${fmt(pending)}</p><p class="dsc-lbl">En attente</p></div></div>
+    <div class="ds-card"><div class="dsc-icon dsc-green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div><p class="dsc-val">${fmt(paid)}</p><p class="dsc-lbl">Payé</p></div></div>
+  `;
+
+  const listEl = document.getElementById('portal-invoices');
+  if (!listEl) return;
+  if (!invs.length) {
+    listEl.innerHTML = '<div class="empty-inv"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>Aucune facture pour l\'instant</p><small>Vos factures apparaîtront ici dès qu\'elles seront créées.</small></div>';
+    return;
+  }
+  listEl.innerHTML = `
+    <div class="inv-list-header">
+      <span>Numéro</span><span>Description</span><span>Date</span><span>Statut</span><span>Montant</span><span></span>
+    </div>
+    ${invs.map((inv:any) => `
+      <div class="inv-list-row" onclick="viewInvoice('${inv.id}')">
+        <span class="ilr-num">${inv.invoice_number}</span>
+        <span class="ilr-title">${inv.title}</span>
+        <span class="ilr-date">${fmtDate(inv.created_at)}</span>
+        <span class="status-pill ${STATUS[inv.status]?.cls || ''}">${STATUS[inv.status]?.label || inv.status}</span>
+        <span class="ilr-amount">${fmt(parseFloat(inv.total))}</span>
+        <span class="ilr-arrow">→</span>
+      </div>
+    `).join('')}
+  `;
+}
+
+(window as any).viewInvoice = (id: string) => {
+  const invs   = (window as any)._invoices as any[];
+  const inv    = invs.find((i:any) => i.id === id); if (!inv) return;
+  const client = (window as any)._client;
+
+  document.getElementById('portal-dashboard')!.style.display = 'none';
+  document.getElementById('invoice-detail')!.style.display   = 'block';
+
+  const set = (elId: string, val: string) => { const e = document.getElementById(elId); if (e) e.textContent = val; };
+  set('inv-doc-number',    inv.invoice_number);
+  set('inv-title-display', inv.title);
+  set('inv-doc-date',      fmtDate(inv.created_at));
+  set('inv-doc-due',       fmtDate(inv.due_date));
+  set('inv-client-name',   client.name);
+  set('inv-client-company',client.company || '');
+  set('inv-client-email',  client.email);
+  set('inv-t-sub',         fmt(parseFloat(inv.subtotal)));
+  set('inv-t-total',       fmt(parseFloat(inv.total)));
+
+  const statusEl = document.getElementById('inv-doc-status');
+  if (statusEl) statusEl.innerHTML = `<span class="status-pill ${STATUS[inv.status]?.cls || ''}">${STATUS[inv.status]?.label || inv.status}</span>`;
+
+  const tpsRow = document.getElementById('inv-t-tps-row');
+  const tvqRow = document.getElementById('inv-t-tvq-row');
+  if (inv.tps_amount && parseFloat(inv.tps_amount) > 0) { set('inv-t-tps', fmt(parseFloat(inv.tps_amount))); if (tpsRow) tpsRow.style.display = 'flex'; }
+  else { if (tpsRow) tpsRow.style.display = 'none'; }
+  if (inv.tvq_amount && parseFloat(inv.tvq_amount) > 0) { set('inv-t-tvq', fmt(parseFloat(inv.tvq_amount))); if (tvqRow) tvqRow.style.display = 'flex'; }
+  else { if (tvqRow) tvqRow.style.display = 'none'; }
+
+  const tbody = document.getElementById('inv-items-body');
+  if (tbody && Array.isArray(inv.items)) {
+    tbody.innerHTML = inv.items.map((it: any) => `
+      <tr>
+        <td>${it.desc}</td>
+        <td class="td-center">${it.qty}</td>
+        <td class="td-right">${fmt(parseFloat(it.price))}</td>
+        <td class="td-right">${fmt(it.qty * parseFloat(it.price))}</td>
+      </tr>
+    `).join('');
+  }
+
+  const nb = document.getElementById('inv-notes-block');
+  const nt = document.getElementById('inv-notes-text');
+  if (inv.notes) { if (nt) nt.textContent = inv.notes; if (nb) nb.style.display = 'block'; }
+  else { if (nb) nb.style.display = 'none'; }
+};
+</script>
+
+<style is:global>
+  main { min-height: 100vh; background: var(--bg); }
+
+  /* ── CONNEXION ──────────────────────────────────────────── */
+  .login-wrap { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+  .login-left { background: var(--dark); display: flex; align-items: center; justify-content: center; padding: 3rem; }
+  .ll-content { max-width: 420px; display: flex; flex-direction: column; gap: 2rem; }
+  .ll-logo { display: flex; align-items: center; gap: 0.85rem; }
+  .ll-logo-circle { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: #fff; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.5rem; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ll-brand-main { display: block; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: #fff; line-height: 1.2; }
+  .ll-brand-sub  { display: block; font-size: 0.65rem; color: rgba(255,255,255,0.45); letter-spacing: 0.08em; margin-top: 2px; }
+  .ll-content h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #fff; line-height: 1.2; }
+  .ll-content > p { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.7; }
+  .ll-perks { display: flex; flex-direction: column; gap: 0.75rem; }
+  .llp { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: rgba(255,255,255,0.6); }
+  .llp-icon { font-size: 1rem; }
+
+  .login-right { background: #fff; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+  .login-form-wrap { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 1.75rem; }
+  .login-form-head h2 { font-size: 1.5rem; margin-bottom: 0.4rem; }
+  .login-form-head p  { font-size: 0.875rem; color: var(--text-2); }
+  #login-form { display: flex; flex-direction: column; gap: 1.1rem; }
+  .lf-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .lf-field label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; }
+  .lf-input-wrap { position: relative; }
+  .lf-input-wrap svg { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-2); }
+  .lf-input-wrap input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 0.82rem 1rem 0.82rem 2.75rem; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; outline: none; color: var(--text); transition: border-color 0.2s; }
+  .lf-input-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,92,180,0.1); }
+  .lf-err { font-size: 0.8rem; color: #dc2626; min-height: 1.2rem; }
+  .lf-btn { display: flex; align-items: center; justify-content: space-between; background: var(--accent); color: #fff; border: none; padding: 0.9rem 1.5rem; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s, transform 0.2s; }
+  .lf-btn:hover { background: var(--accent-d); transform: translateY(-1px); }
+  .lf-btn:disabled { opacity: 0.6; }
+  .lf-back { font-size: 0.82rem; color: var(--text-2); text-align: center; transition: color 0.2s; }
+  .lf-back:hover { color: var(--accent); }
+  @media (max-width: 768px) { .login-wrap { grid-template-columns: 1fr; } .login-left { display: none; } }
+
+  /* ── PORTAIL ─────────────────────────────────────────────── */
+  .portal-app { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+  .portal-header { background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+  .ph-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; height: 64px; gap: 1rem; }
+  .ph-logo { display: flex; align-items: center; gap: 0.65rem; }
+  .ph-logo-circle { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ph-brand-main { display: block; font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: var(--dark); line-height: 1.2; }
+  .ph-brand-sub  { display: block; font-size: 0.52rem; color: var(--text-2); letter-spacing: 0.1em; }
+  .ph-right { display: flex; align-items: center; gap: 1.25rem; }
+  .ph-user-badge { display: flex; align-items: center; gap: 0.75rem; }
+  .pub-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: #fff; font-family: 'Cormorant Garamond', serif; flex-shrink: 0; }
+  .pub-name    { font-size: 0.875rem; font-weight: 600; line-height: 1; }
+  .pub-company { font-size: 0.72rem; color: var(--text-2); margin-top: 2px; }
+  .ph-logout { display: flex; align-items: center; gap: 0.5rem; background: none; border: 1px solid var(--border); color: var(--text-2); padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .ph-logout:hover { border-color: #dc2626; color: #dc2626; }
+
+  /* ── BODY ──────────────────────────────────────────────── */
+  .portal-body { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 4rem; width: 100%; }
+  .dash-head { margin-bottom: 1.5rem; }
+  .dash-head h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .dash-sub { font-size: 0.875rem; color: var(--text-2); }
+
+  /* STATS */
+  .dash-stats { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .ds-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.4rem; display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 160px; }
+  .dsc-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .dsc-blue   { background: rgba(42,92,180,0.1);  color: var(--accent); }
+  .dsc-amber  { background: rgba(245,158,11,0.1);  color: #d97706; }
+  .dsc-green  { background: rgba(16,185,129,0.1);  color: #059669; }
+  .dsc-val { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 700; color: var(--dark); line-height: 1; }
+  .dsc-lbl { font-size: 0.72rem; color: var(--text-2); margin-top: 3px; }
+
+  /* INVOICE LIST */
+  .invoices-list { background: #fff; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .inv-list-header { display: grid; grid-template-columns: 160px 1fr 150px 130px 130px 40px; gap: 1rem; padding: 0.75rem 1.5rem; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .inv-list-header span { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
+  .inv-list-row { display: grid; grid-template-columns: 160px 1fr 150px 130px 130px 40px; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); align-items: center; cursor: pointer; transition: background 0.15s; }
+  .inv-list-row:last-child { border-bottom: none; }
+  .inv-list-row:hover { background: rgba(42,92,180,0.03); }
+  .ilr-num    { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 0.95rem; color: var(--dark); }
+  .ilr-title  { font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ilr-date   { font-size: 0.8rem; color: var(--text-2); }
+  .ilr-amount { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1rem; color: var(--dark); }
+  .ilr-arrow  { color: var(--text-2); font-size: 1rem; text-align: center; }
+  .empty-inv { text-align: center; padding: 4rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; color: var(--text-2); background: #fff; border: 1px solid var(--border); border-radius: 14px; }
+  .empty-inv svg { opacity: 0.25; }
+  .empty-inv p { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+  .empty-inv small { font-size: 0.82rem; }
+
+  /* STATUS PILLS */
+  .status-pill { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: 999px; letter-spacing: 0.04em; white-space: nowrap; }
+  .sp-pending   { background: rgba(245,158,11,0.1);  color: #d97706; }
+  .sp-paid      { background: rgba(16,185,129,0.1);  color: #059669; }
+  .sp-overdue   { background: rgba(239,68,68,0.1);   color: #dc2626; }
+  .sp-cancelled { background: rgba(107,114,128,0.1); color: #6b7280; }
+
+  /* ── INVOICE DETAIL ────────────────────────────────────── */
+  .inv-detail-wrap { max-width: 860px; }
+  .inv-detail-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .back-btn { display: flex; align-items: center; gap: 0.4rem; background: none; border: none; color: var(--accent); font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; transition: opacity 0.2s; }
+  .back-btn:hover { opacity: 0.7; }
+  .print-btn { display: flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s; }
+  .print-btn:hover { background: var(--accent-d); }
+
+  .inv-doc { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 3rem; }
+  .inv-doc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+  .inv-doc-logo { display: flex; align-items: center; gap: 0.75rem; }
+  .idl-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.3rem; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .inv-logo-n { display: block; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--dark); line-height: 1.2; }
+  .inv-logo-s { display: block; font-size: 0.58rem; color: var(--text-2); letter-spacing: 0.08em; }
+  .inv-doc-meta { text-align: right; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; }
+  .inv-doc-title  { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; letter-spacing: 0.08em; color: var(--accent); }
+  .inv-doc-number { font-size: 0.875rem; color: var(--text-2); }
+  .inv-doc-status { margin-top: 0.25rem; }
+
+  .inv-parties { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 2rem; }
+  .ip-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.6rem; }
+  .ip-name  { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+  .ip-info  { font-size: 0.82rem; color: var(--text-2); line-height: 1.5; }
+  .ip-dates { display: flex; flex-direction: column; gap: 0.4rem; }
+  .ipd-row  { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.82rem; }
+  .ipd-row span   { color: var(--text-2); }
+  .ipd-row strong { color: var(--text); }
+
+  .inv-title-block { background: var(--bg); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.75rem; }
+  .itb-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 0.25rem; }
+  .itb-val   { font-weight: 600; font-size: 0.95rem; }
+
+  .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  .inv-table thead th { padding: 0.75rem 1rem; text-align: left; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); background: var(--bg); border-bottom: 2px solid var(--border); }
+  .th-center { text-align: center; }
+  .th-right  { text-align: right; }
+  .inv-table tbody td { padding: 0.9rem 1rem; font-size: 0.875rem; border-bottom: 1px solid var(--border); }
+  .td-center { text-align: center; color: var(--text-2); }
+  .td-right  { text-align: right; }
+
+  .inv-totals { max-width: 340px; margin-left: auto; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .it-row { display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-2); }
+  .it-sub { font-size: 0.82rem; }
+  .it-grand { font-size: 1.05rem; font-weight: 600; color: var(--dark); padding-top: 0.75rem; border-top: 2px solid var(--dark); }
+  .it-grand strong { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--accent); }
+
+  .inv-notes { background: var(--bg); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+  .inv-notes-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 0.4rem; }
+  .inv-notes-text  { font-size: 0.875rem; color: var(--text); line-height: 1.65; }
+  .inv-footer { text-align: center; font-size: 0.78rem; color: var(--text-2); padding-top: 1.5rem; border-top: 1px solid var(--border); font-style: italic; font-family: 'Cormorant Garamond', serif; }
+
+  /* PRINT */
+  @media print {
+    .portal-header, .inv-detail-toolbar, .dash-stats, .dash-head { display: none !important; }
+    .inv-doc { border: none; border-radius: 0; padding: 0; box-shadow: none; }
+    .portal-body { padding: 0; max-width: 100%; }
+    body { background: white; }
+  }
+  @media (max-width: 900px) {
+    .inv-list-header { display: none; }
+    .inv-list-row { grid-template-columns: 1fr 1fr; gap: 0.5rem; padding: 1rem; }
+    .ilr-title { grid-column: 1 / -1; }
+    .ilr-arrow { display: none; }
+    .inv-parties { grid-template-columns: 1fr; gap: 1rem; }
+    .inv-doc { padding: 1.5rem; }
+  }
+  @media (max-width: 640px) {
+    .ph-user-badge .pub-company, .ph-user-badge .pub-info { display: none; }
+    .dash-stats { flex-direction: column; }
+  }
+</style>
+</Layout>
