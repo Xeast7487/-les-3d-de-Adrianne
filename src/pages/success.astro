@@ -2,6 +2,34 @@
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import Stripe from 'stripe';
+
+const sessionId = Astro.url.searchParams.get('session_id');
+
+let productName = '';
+let amountDisplay = '';
+let customerEmail = '';
+let customerName = '';
+
+if (sessionId) {
+  try {
+    const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY as string);
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['line_items'],
+    });
+    productName = session.line_items?.data[0]?.description ?? '';
+    if (session.amount_total) {
+      const amt = (session.amount_total / 100).toFixed(2);
+      const cur = (session.currency ?? 'cad').toUpperCase();
+      amountDisplay = `${amt} ${cur}`;
+    }
+    customerEmail = session.customer_details?.email ?? '';
+    const nomField = session.custom_fields?.find(f => f.key === 'nom_complet');
+    customerName = nomField?.text?.value || session.customer_details?.name || '';
+  } catch {
+    // Show generic message if session can't be fetched
+  }
+}
 ---
 <Layout title="Paiement réussi — Les 3D d'Adrianne">
   <Nav />
@@ -10,9 +38,23 @@ import Footer from '../components/Footer.astro';
       <div class="container">
         <div class="success-card">
           <div class="success-icon">✓</div>
-          <h1>Merci pour votre commande !</h1>
-          <p>Votre paiement a été accepté avec succès. Adrianne vous contactera bientôt pour confirmer les détails de votre commande et l'expédition.</p>
-          <p class="sub">Un courriel de confirmation vous a été envoyé par Stripe.</p>
+          <h1>Merci {customerName ? `${customerName} !` : 'pour votre commande !'}</h1>
+
+          {productName && amountDisplay && (
+            <div class="order-summary">
+              <span class="item-name">{productName}</span>
+              <span class="item-amount">{amountDisplay}</span>
+            </div>
+          )}
+
+          <p>Votre paiement a été accepté avec succès. Adrianne commencera la préparation de votre commande et vous contactera pour confirmer les détails.</p>
+
+          {customerEmail
+            ? <p class="sub">Un courriel de confirmation a été envoyé à <strong>{customerEmail}</strong> avec votre numéro de commande.</p>
+            : <p class="sub">Un courriel de confirmation avec votre numéro de commande vous a été envoyé.</p>
+          }
+
+          <a href="/suivi" class="btn-track">Suivre ma commande</a>
           <a href="/" class="btn-primary">Retour à l'accueil</a>
         </div>
       </div>
@@ -24,11 +66,67 @@ import Footer from '../components/Footer.astro';
 <style>
   main { padding-top: 68px; min-height: 80vh; display: flex; align-items: center; }
   .success-section { width: 100%; padding: 5rem 2rem; }
-  .success-card { text-align: center; max-width: 500px; margin: 0 auto; background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 3.5rem 2.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
-  .success-icon { width: 72px; height: 72px; border-radius: 50%; background: #dcfce7; color: #16a34a; font-size: 2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-weight: 700; }
+  .success-card {
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3.5rem 2.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+  }
+  .success-icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-weight: 700;
+  }
   .success-card h1 { font-size: 1.6rem; margin-bottom: 1rem; }
+
+  .order-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg, #f8f7f4);
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+  .item-name { color: var(--text, #0d1b2e); font-weight: 500; }
+  .item-amount { font-weight: 700; color: #16a34a; }
+
   .success-card p { font-size: 0.925rem; color: var(--text-2); line-height: 1.75; margin-bottom: 0.75rem; }
-  .sub { font-size: 0.8rem; color: rgba(13,27,46,0.4); }
-  .btn-primary { display: inline-flex; align-items: center; background: var(--accent); color: var(--white); padding: 0.75rem 2rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; margin-top: 1.5rem; transition: background 0.2s, transform 0.2s; }
+  .sub { font-size: 0.82rem; color: rgba(13,27,46,0.45); }
+  .sub strong { color: rgba(13,27,46,0.65); }
+
+  .btn-primary, .btn-track {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 2rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--white);
+    margin-left: 0.5rem;
+  }
   .btn-primary:hover { background: var(--accent-d); transform: translateY(-2px); }
+  .btn-track {
+    background: transparent;
+    border: 1.5px solid var(--border, #e2ddd5);
+    color: var(--text, #0d1b2e);
+  }
+  .btn-track:hover { background: var(--bg, #f8f7f4); transform: translateY(-2px); }
 </style>

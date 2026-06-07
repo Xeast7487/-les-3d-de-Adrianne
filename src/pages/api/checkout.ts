@@ -34,9 +34,17 @@ export const POST: APIRoute = async ({ request }) => {
         },
       ],
       mode: 'payment',
+      billing_address_collection: 'auto',
+      custom_fields: [
+        {
+          key: 'nom_complet',
+          label: { type: 'custom', custom: 'Prénom et nom complet' },
+          type: 'text',
+        },
+      ],
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/`,
-      metadata: { product_id: product_id || '' },
+      metadata: { product_id: product_id || '', product_name: name },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

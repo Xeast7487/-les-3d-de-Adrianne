@@ -28,6 +28,7 @@ import Footer from '../components/Footer.astro';
           <button class="tab-btn active" data-tab="galerie">🖼️ Galerie</button>
           <button class="tab-btn" data-tab="realisations">🎨 Réalisations</button>
           <button class="tab-btn" data-tab="commandes">📦 Commandes</button>
+          <button class="tab-btn" data-tab="filaments">🧵 Filaments</button>
           <button id="logout" class="btn-outline" style="margin-left:auto">Déconnexion</button>
         </div>
 
@@ -285,6 +286,70 @@ import Footer from '../components/Footer.astro';
           </div>
         </div><!-- fin tab-commandes -->
 
+        <!-- ═══ TAB FILAMENTS ═══ -->
+        <div id="tab-filaments" class="tab-content" style="display:none">
+          <div class="admin-top">
+            <div>
+              <h1>Filaments</h1>
+              <p class="admin-sub">Gère les couleurs et types de filaments disponibles à la commande</p>
+            </div>
+            <button id="open-filament" class="btn-primary">+ Ajouter un filament</button>
+          </div>
+
+          <!-- Modal filament -->
+          <div id="fil-modal-overlay" class="modal-overlay" style="display:none">
+            <div class="modal" style="max-width:480px">
+              <div class="modal-head">
+                <h3 id="fil-modal-title">Nouveau filament</h3>
+                <button id="fil-modal-close" class="modal-x">×</button>
+              </div>
+              <form id="fil-form">
+                <input type="hidden" id="fil-edit-id" />
+                <div class="mform-row">
+                  <div class="mfield">
+                    <label>Nom <span class="req">*</span></label>
+                    <input type="text" id="fil-name" placeholder="ex: Blanc, Rouge vif…" required />
+                  </div>
+                  <div class="mfield">
+                    <label>Type <span class="req">*</span></label>
+                    <select id="fil-type" required>
+                      <option value="PLA">PLA</option>
+                      <option value="ABS">ABS</option>
+                      <option value="ASA">ASA</option>
+                      <option value="PETG">PETG</option>
+                      <option value="TPU">TPU</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mfield">
+                  <label>Couleur <span class="req">*</span></label>
+                  <div class="color-pick-row">
+                    <input type="color" id="fil-color" value="#888888" class="color-picker-input" />
+                    <input type="text" id="fil-color-hex" value="#888888" placeholder="#RRGGBB" maxlength="7" />
+                    <div id="fil-color-preview" class="color-preview-swatch" style="background:#888888"></div>
+                  </div>
+                </div>
+                <div class="mfield mfield-check" style="margin-top:0.25rem">
+                  <label class="check-lbl">
+                    <input type="checkbox" id="fil-available" checked />
+                    <span>Disponible pour commande</span>
+                  </label>
+                </div>
+                <div class="modal-foot">
+                  <button type="button" id="fil-cancel" class="btn-outline">Annuler</button>
+                  <button type="submit" id="fil-save" class="btn-primary">Enregistrer</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Liste filaments -->
+          <div id="filaments-grid" class="filaments-grid"></div>
+          <div id="filaments-empty" style="display:none" class="list-empty">
+            <p>Aucun filament pour l'instant. Ajoute tes couleurs disponibles !</p>
+          </div>
+        </div><!-- fin tab-filaments -->
+
       </div>
     </div>
 
@@ -352,6 +417,17 @@ import { createClient } from '@supabase/supabase-js';
      ON CONFLICT (date) DO UPDATE SET count = daily_visits.count + 1;
    END;
    $$ LANGUAGE plpgsql SECURITY DEFINER;
+   -- Filaments disponibles (à exécuter une seule fois) :
+   CREATE TABLE IF NOT EXISTS public.adrianne_filaments (
+     id            UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+     name          TEXT        NOT NULL,
+     hex_color     TEXT        NOT NULL DEFAULT '#888888',
+     filament_type TEXT        NOT NULL DEFAULT 'PLA',
+     is_available  BOOLEAN     DEFAULT TRUE,
+     created_at    TIMESTAMPTZ DEFAULT NOW()
+   );
+   ALTER TABLE public.adrianne_filaments ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "open" ON public.adrianne_filaments FOR ALL USING (true) WITH CHECK (true);
 ══════════════════════════════════════════════════════════ */
 
 const ADMIN_PWD = 'adrianne2025'; // ← change ce mot de passe
@@ -604,6 +680,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
     if (btn.dataset.tab === 'commandes') loadOrders();
     if (btn.dataset.tab === 'realisations') loadRealisations();
+    if (btn.dataset.tab === 'filaments') loadFilaments();
   });
 });
 
@@ -886,6 +963,112 @@ async function loadOrders() {
     });
   });
 }
+
+// ── Filaments ─────────────────────────────────────────────
+const filOverlay    = document.getElementById('fil-modal-overlay');
+const filColorInput = document.getElementById('fil-color');
+const filColorHex   = document.getElementById('fil-color-hex');
+const filColorPrev  = document.getElementById('fil-color-preview');
+let editingFilId = null;
+
+function updateColorPreview(hex) {
+  filColorPrev.style.background = hex;
+  filColorInput.value = hex;
+  filColorHex.value   = hex;
+}
+filColorInput.addEventListener('input', () => updateColorPreview(filColorInput.value));
+filColorHex.addEventListener('input', () => {
+  const v = filColorHex.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) updateColorPreview(v);
+  else filColorPrev.style.background = v;
+});
+
+function openFilModal(item = null) {
+  editingFilId = item?.id || null;
+  document.getElementById('fil-modal-title').textContent = item ? 'Modifier le filament' : 'Nouveau filament';
+  document.getElementById('fil-edit-id').value    = item?.id || '';
+  document.getElementById('fil-name').value        = item?.name || '';
+  document.getElementById('fil-type').value        = item?.filament_type || 'PLA';
+  document.getElementById('fil-available').checked = item?.is_available !== false;
+  updateColorPreview(item?.hex_color || '#888888');
+  filOverlay.style.display = 'flex';
+}
+function closeFilModal() { filOverlay.style.display = 'none'; }
+
+document.getElementById('open-filament').addEventListener('click', () => openFilModal());
+document.getElementById('fil-modal-close').addEventListener('click', closeFilModal);
+document.getElementById('fil-cancel').addEventListener('click', closeFilModal);
+filOverlay.addEventListener('click', e => { if (e.target === filOverlay) closeFilModal(); });
+
+document.getElementById('fil-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const saveBtn = document.getElementById('fil-save');
+  saveBtn.disabled = true; saveBtn.textContent = 'Enregistrement…';
+  const hex = filColorHex.value;
+  const payload = {
+    name:          document.getElementById('fil-name').value.trim(),
+    hex_color:     /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : filColorInput.value,
+    filament_type: document.getElementById('fil-type').value,
+    is_available:  document.getElementById('fil-available').checked,
+  };
+  try {
+    if (editingFilId) {
+      await sb.from('adrianne_filaments').update(payload).eq('id', editingFilId);
+    } else {
+      await sb.from('adrianne_filaments').insert(payload);
+    }
+    closeFilModal(); loadFilaments();
+  } catch (err) { alert('Erreur : ' + err.message); }
+  finally { saveBtn.disabled = false; saveBtn.textContent = 'Enregistrer'; }
+});
+
+async function toggleFilAvail(id, current) {
+  await sb.from('adrianne_filaments').update({ is_available: !current }).eq('id', id);
+  loadFilaments();
+}
+
+async function loadFilaments() {
+  const { data: items } = await sb.from('adrianne_filaments').select('*').order('filament_type').order('name');
+  const grid  = document.getElementById('filaments-grid');
+  const empty = document.getElementById('filaments-empty');
+  if (!items?.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = '';
+  items.forEach(f => {
+    const card = document.createElement('div');
+    card.className = `fil-card${f.is_available ? '' : ' fil-unavail'}`;
+    card.innerHTML = `
+      <div class="fil-swatch" style="background:${f.hex_color}"></div>
+      <div class="fil-info">
+        <span class="fil-name">${f.name}</span>
+        <span class="fil-type">${f.filament_type}</span>
+      </div>
+      <button class="toggle-avail-btn" data-id="${f.id}" data-avail="${f.is_available}" title="${f.is_available ? 'Désactiver' : 'Activer'}">
+        ${f.is_available ? '✅' : '⏸️'}
+      </button>
+      <div class="fil-actions">
+        <button class="action-btn edit-fil-btn" data-id="${f.id}">✏️</button>
+        <button class="action-btn del-fil-btn" data-id="${f.id}">🗑️</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('.toggle-avail-btn').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilAvail(btn.dataset.id, btn.dataset.avail === 'true'));
+  });
+  grid.querySelectorAll('.edit-fil-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data } = await sb.from('adrianne_filaments').select('*').eq('id', btn.dataset.id).single();
+      openFilModal(data);
+    });
+  });
+  grid.querySelectorAll('.del-fil-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Supprimer ce filament ?')) return;
+      await sb.from('adrianne_filaments').delete().eq('id', btn.dataset.id);
+      loadFilaments();
+    });
+  });
+}
 </script>
 
 <style>
@@ -997,6 +1180,23 @@ async function loadOrders() {
   .pr-stripe-chip { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(42,92,180,0.1); color: var(--accent); margin-top: 0.25rem; }
   .pr-no-stripe { display: inline-block; font-size: 0.68rem; color: rgba(13,27,46,0.35); margin-top: 0.25rem; font-style: italic; }
   .field-hint { font-size: 0.72rem; color: var(--text-2); margin-top: 0.2rem; line-height: 1.4; }
+
+  /* Filaments */
+  .filaments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+  .fil-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.75rem; transition: box-shadow 0.2s; }
+  .fil-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .fil-unavail { opacity: 0.5; }
+  .fil-swatch { width: 42px; height: 42px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+  .fil-info { flex: 1; min-width: 0; }
+  .fil-name { display: block; font-size: 0.9rem; font-weight: 600; }
+  .fil-type { display: inline-block; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); background: rgba(42,92,180,0.1); padding: 0.1rem 0.45rem; border-radius: 999px; margin-top: 0.15rem; }
+  .toggle-avail-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; border-radius: 6px; flex-shrink: 0; }
+  .toggle-avail-btn:hover { background: var(--bg2); }
+  .fil-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+  .color-pick-row { display: flex; align-items: center; gap: 0.6rem; }
+  .color-picker-input { width: 44px; height: 40px; padding: 2px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; background: var(--bg); flex-shrink: 0; }
+  .color-pick-row input[type="text"] { flex: 1; }
+  .color-preview-swatch { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); flex-shrink: 0; }
 
   @media (max-width: 600px) { .mform-row { grid-template-columns: 1fr; } .pr-actions { flex-direction: column; } }
 </style>

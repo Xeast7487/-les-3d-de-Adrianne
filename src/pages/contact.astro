@@ -91,8 +91,11 @@ import Footer from '../components/Footer.astro';
             </div>
 
             <div class="field">
-              <label for="colors">Couleur(s) souhaitée(s) <span class="opt">(optionnel)</span></label>
-              <input type="text" id="colors" name="colors" placeholder="ex: blanc, noir, rouge — ou sans préférence" />
+              <label>Couleur(s) souhaitée(s) <span class="opt">(optionnel)</span></label>
+              <input type="hidden" id="colors" name="colors" value="" />
+              <div id="color-swatches" class="swatches-wrap">
+                <span class="swatches-loading">Chargement des couleurs…</span>
+              </div>
             </div>
 
             <div class="field">
@@ -184,6 +187,66 @@ import Footer from '../components/Footer.astro';
       alert('Une erreur est survenue. Veuillez réessayer.');
     }
   });
+
+  // ── Sélecteur de couleurs de filaments ───────────────────
+  import { createClient } from '@supabase/supabase-js';
+  const sb2 = createClient(
+    'https://gnpjilwdehxsafdqdtak.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGppbHdkZWh4c2FmZHFkdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk3NjIsImV4cCI6MjA5NTU1NTc2Mn0.iFYR9r5ZZsKcc9n2N8jPtFTLs0QDTIqR3KMCMhCdSdA'
+  );
+
+  const colorsInput = document.getElementById('colors');
+  const swatchContainer = document.getElementById('color-swatches');
+  const selectedColors = new Set();
+
+  function createSwatch(name, hex, type) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'swatch-btn';
+    btn.dataset.name = name;
+    btn.innerHTML = `
+      <span class="swatch-circle" style="background:${hex}">
+        <span class="swatch-check">✓</span>
+      </span>
+      <span class="swatch-label">${name}</span>
+      ${type ? `<span class="swatch-type">${type}</span>` : ''}
+    `;
+    btn.addEventListener('click', () => {
+      if (name === 'Sans préférence') {
+        const wasSelected = btn.classList.contains('selected');
+        swatchContainer.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+        selectedColors.clear();
+        if (!wasSelected) { btn.classList.add('selected'); selectedColors.add('Sans préférence'); }
+      } else {
+        swatchContainer.querySelector('[data-name="Sans préférence"]')?.classList.remove('selected');
+        selectedColors.delete('Sans préférence');
+        btn.classList.toggle('selected');
+        if (btn.classList.contains('selected')) selectedColors.add(name);
+        else selectedColors.delete(name);
+      }
+      colorsInput.value = selectedColors.size > 0 ? [...selectedColors].join(', ') : '';
+    });
+    return btn;
+  }
+
+  async function initSwatches() {
+    try {
+      const { data: filaments } = await sb2.from('adrianne_filaments').select('*').eq('is_available', true).order('filament_type').order('name');
+      swatchContainer.innerHTML = '';
+      swatchContainer.appendChild(createSwatch('Sans préférence', '#e8e8e8', ''));
+      filaments?.forEach(f => swatchContainer.appendChild(createSwatch(f.name, f.hex_color, f.filament_type)));
+    } catch {
+      swatchContainer.innerHTML = '';
+      const fallback = document.createElement('input');
+      fallback.type = 'text';
+      fallback.placeholder = 'ex: blanc, noir, rouge — ou sans préférence';
+      fallback.className = 'fallback-input';
+      fallback.addEventListener('input', e => { colorsInput.value = e.target.value; });
+      swatchContainer.appendChild(fallback);
+    }
+  }
+
+  initSwatches();
 </script>
 
 <style>
@@ -250,6 +313,20 @@ import Footer from '../components/Footer.astro';
     border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.5rem;
     font-size: 0.84rem; color: var(--accent);
   }
+  /* Swatch couleurs */
+  .swatches-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.35rem; min-height: 70px; align-items: flex-start; align-content: flex-start; }
+  .swatches-loading { font-size: 0.8rem; color: var(--text-2); font-style: italic; align-self: center; }
+  .swatch-btn { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; background: none; border: 2px solid var(--border); border-radius: 12px; padding: 0.55rem 0.5rem; cursor: pointer; transition: border-color 0.2s, transform 0.15s, background 0.2s; min-width: 60px; font-family: 'DM Sans', sans-serif; }
+  .swatch-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .swatch-btn.selected { border-color: var(--accent); background: rgba(42,92,180,0.07); }
+  .swatch-circle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .swatch-check { display: none; font-size: 0.75rem; font-weight: 700; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  .swatch-btn.selected .swatch-check { display: block; }
+  .swatch-label { font-size: 0.67rem; color: var(--text); text-align: center; line-height: 1.2; font-weight: 500; max-width: 56px; word-wrap: break-word; }
+  .swatch-type { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em; color: var(--accent); text-transform: uppercase; }
+  .fallback-input { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.875rem; outline: none; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); transition: border-color 0.2s; }
+  .fallback-input:focus { border-color: var(--accent); }
+
   @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; gap: 2.5rem; } }
   @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } .form-wrap { padding: 1.5rem; } }
 </style>
