@@ -313,19 +313,19 @@ import Footer from '../components/Footer.astro';
     border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.5rem;
     font-size: 0.84rem; color: var(--accent);
   }
-  /* Swatch couleurs */
+  /* Swatch couleurs — :global() requis car les boutons sont créés dynamiquement en JS */
   .swatches-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.35rem; min-height: 70px; align-items: flex-start; align-content: flex-start; }
   .swatches-loading { font-size: 0.8rem; color: var(--text-2); font-style: italic; align-self: center; }
-  .swatch-btn { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; background: none; border: 2px solid var(--border); border-radius: 12px; padding: 0.55rem 0.5rem; cursor: pointer; transition: border-color 0.2s, transform 0.15s, background 0.2s; min-width: 60px; font-family: 'DM Sans', sans-serif; }
-  .swatch-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .swatch-btn.selected { border-color: var(--accent); background: rgba(42,92,180,0.07); }
-  .swatch-circle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .swatch-check { display: none; font-size: 0.75rem; font-weight: 700; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-  .swatch-btn.selected .swatch-check { display: block; }
-  .swatch-label { font-size: 0.67rem; color: var(--text); text-align: center; line-height: 1.2; font-weight: 500; max-width: 56px; word-wrap: break-word; }
-  .swatch-type { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em; color: var(--accent); text-transform: uppercase; }
-  .fallback-input { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.875rem; outline: none; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); transition: border-color 0.2s; }
-  .fallback-input:focus { border-color: var(--accent); }
+  :global(.swatch-btn) { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; background: none; border: 2px solid var(--border); border-radius: 12px; padding: 0.55rem 0.5rem; cursor: pointer; transition: border-color 0.2s, transform 0.15s, background 0.2s; min-width: 60px; font-family: 'DM Sans', sans-serif; }
+  :global(.swatch-btn:hover) { border-color: var(--accent); transform: translateY(-1px); }
+  :global(.swatch-btn.selected) { border-color: var(--accent); background: rgba(42,92,180,0.07); }
+  :global(.swatch-circle) { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  :global(.swatch-check) { display: none; font-size: 0.75rem; font-weight: 700; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  :global(.swatch-btn.selected .swatch-check) { display: block; }
+  :global(.swatch-label) { font-size: 0.67rem; color: var(--text); text-align: center; line-height: 1.2; font-weight: 500; max-width: 56px; word-wrap: break-word; }
+  :global(.swatch-type) { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em; color: var(--accent); text-transform: uppercase; }
+  :global(.fallback-input) { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.875rem; outline: none; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); transition: border-color 0.2s; }
+  :global(.fallback-input:focus) { border-color: var(--accent); }
 
   @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; gap: 2.5rem; } }
   @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } .form-wrap { padding: 1.5rem; } }

@@ -252,6 +252,13 @@ import Footer from '../components/Footer.astro';
                   <label>Description de la commande <span class="req">*</span></label>
                   <textarea id="o-desc" rows="2" placeholder="ex: Figurine Dragon blanc 15cm" required></textarea>
                 </div>
+                <div class="mfield">
+                  <label>Couleur(s) de filament <span class="opt">(optionnel)</span></label>
+                  <input type="hidden" id="o-colors" />
+                  <div id="o-color-swatches" class="swatches-wrap">
+                    <span class="swatches-loading">Chargement des couleurs…</span>
+                  </div>
+                </div>
                 <div class="mform-row">
                   <div class="mfield">
                     <label>Statut <span class="req">*</span></label>
@@ -612,6 +619,9 @@ import { createClient } from '@supabase/supabase-js';
    -- Commandes spéciales — colonnes facture (à exécuter une seule fois) :
    ALTER TABLE public.adrianne_orders ADD COLUMN IF NOT EXISTS client_email TEXT DEFAULT '';
    ALTER TABLE public.adrianne_orders ADD COLUMN IF NOT EXISTS total_cents INTEGER DEFAULT NULL;
+
+   -- Couleurs de filament sur les commandes (à exécuter une seule fois) :
+   ALTER TABLE public.adrianne_orders ADD COLUMN IF NOT EXISTS colors TEXT DEFAULT '';
 
    -- Filaments disponibles (à exécuter une seule fois) :
    CREATE TABLE IF NOT EXISTS public.adrianne_filaments (
@@ -1095,6 +1105,53 @@ async function loadRealisations() {
 const orderOverlay = document.getElementById('order-modal-overlay');
 let editingOrderId = null;
 
+let orderSelectedColors = new Set();
+
+function createOrderSwatch(name, hex, container) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'swatch-btn';
+  btn.dataset.name = name;
+  if (orderSelectedColors.has(name)) btn.classList.add('selected');
+  btn.innerHTML = `
+    <span class="swatch-circle" style="background:${hex || '#e8e8e8'}">
+      <span class="swatch-check">✓</span>
+    </span>
+    <span class="swatch-label">${name}</span>
+  `;
+  btn.addEventListener('click', () => {
+    if (name === 'Sans préférence') {
+      const wasSelected = btn.classList.contains('selected');
+      container.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+      orderSelectedColors.clear();
+      if (!wasSelected) { btn.classList.add('selected'); orderSelectedColors.add('Sans préférence'); }
+    } else {
+      container.querySelector('[data-name="Sans préférence"]')?.classList.remove('selected');
+      orderSelectedColors.delete('Sans préférence');
+      btn.classList.toggle('selected');
+      if (btn.classList.contains('selected')) orderSelectedColors.add(name);
+      else orderSelectedColors.delete(name);
+    }
+    document.getElementById('o-colors').value = orderSelectedColors.size > 0 ? [...orderSelectedColors].join(', ') : '';
+  });
+  return btn;
+}
+
+async function loadOrderSwatches(preselected = '') {
+  orderSelectedColors = new Set(preselected ? preselected.split(', ').map(s => s.trim()).filter(Boolean) : []);
+  const container = document.getElementById('o-color-swatches');
+  container.innerHTML = '<span class="swatches-loading">Chargement…</span>';
+  try {
+    const { data: filaments } = await sb.from('adrianne_filaments').select('*').eq('is_available', true).order('filament_type').order('name');
+    container.innerHTML = '';
+    container.appendChild(createOrderSwatch('Sans préférence', '#e8e8e8', container));
+    filaments?.forEach(f => container.appendChild(createOrderSwatch(f.name, f.hex_color, container)));
+    document.getElementById('o-colors').value = preselected;
+  } catch {
+    container.innerHTML = '<span class="swatches-loading">Erreur de chargement</span>';
+  }
+}
+
 function openOrderModal(order = null) {
   editingOrderId = order?.id || null;
   document.getElementById('order-modal-title').textContent = order ? 'Modifier la commande' : 'Nouvelle commande';
@@ -1113,6 +1170,7 @@ function openOrderModal(order = null) {
     const pad = n => String(n).padStart(2, '0');
     document.getElementById('o-num').value = `ADR-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${Math.floor(Math.random()*900)+100}`;
   }
+  loadOrderSwatches(order?.colors || '');
   orderOverlay.style.display = 'flex';
 }
 function closeOrderModal() { orderOverlay.style.display = 'none'; }
@@ -1132,6 +1190,7 @@ document.getElementById('order-form').addEventListener('submit', async e => {
     order_number:   document.getElementById('o-num').value.trim().toUpperCase(),
     client_name:    document.getElementById('o-name').value.trim(),
     description:    document.getElementById('o-desc').value.trim(),
+    colors:         document.getElementById('o-colors').value.trim(),
     status:         document.getElementById('o-status').value,
     estimated_days: parseInt(document.getElementById('o-days').value),
     notes:          document.getElementById('o-notes').value.trim(),
@@ -1179,6 +1238,7 @@ async function loadOrders() {
           <span class="order-status-chip" style="background:${info.color}18;color:${info.color}">${info.label}</span>
         </div>
         <span class="pr-meta">${o.client_name} · ${o.description}</span>
+        ${o.colors ? `<span class="pr-colors">🎨 ${o.colors}</span>` : ''}
         <div class="order-link-row">
           <a href="/suivi?num=${o.order_number}" target="_blank" class="order-track-link">🔗 Lien de suivi</a>
           <a href="/facture/${o.order_number}" target="_blank" class="order-track-link" style="margin-left:0.75rem">🧾 Facture</a>
@@ -1740,6 +1800,25 @@ async function loadFilaments() {
   .pr-stripe-chip { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(42,92,180,0.1); color: var(--accent); margin-top: 0.25rem; }
   .pr-no-stripe { display: inline-block; font-size: 0.68rem; color: rgba(13,27,46,0.35); margin-top: 0.25rem; font-style: italic; }
   .field-hint { font-size: 0.72rem; color: var(--text-2); margin-top: 0.2rem; line-height: 1.4; }
+  .pr-colors { display: block; font-size: 0.72rem; color: var(--text-2); margin-top: 0.15rem; }
+
+  /* Swatches couleurs commande — :global() requis (éléments créés en JS) */
+  :global(#o-color-swatches .swatch-btn),
+  :global(#order-modal-overlay .swatch-btn) { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; background: none; border: 2px solid var(--border); border-radius: 12px; padding: 0.55rem 0.5rem; cursor: pointer; transition: border-color 0.2s, transform 0.15s, background 0.2s; min-width: 60px; font-family: 'DM Sans', sans-serif; }
+  :global(#o-color-swatches .swatch-btn:hover),
+  :global(#order-modal-overlay .swatch-btn:hover) { border-color: var(--accent); transform: translateY(-1px); }
+  :global(#o-color-swatches .swatch-btn.selected),
+  :global(#order-modal-overlay .swatch-btn.selected) { border-color: var(--accent); background: rgba(42,92,180,0.07); }
+  :global(#o-color-swatches .swatch-circle),
+  :global(#order-modal-overlay .swatch-circle) { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  :global(#o-color-swatches .swatch-check),
+  :global(#order-modal-overlay .swatch-check) { display: none; font-size: 0.7rem; font-weight: 700; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  :global(#o-color-swatches .swatch-btn.selected .swatch-check),
+  :global(#order-modal-overlay .swatch-btn.selected .swatch-check) { display: block; }
+  :global(#o-color-swatches .swatch-label),
+  :global(#order-modal-overlay .swatch-label) { font-size: 0.62rem; color: var(--text); text-align: center; line-height: 1.2; font-weight: 500; max-width: 54px; word-wrap: break-word; }
+  .swatches-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; min-height: 60px; align-items: flex-start; align-content: flex-start; }
+  .swatches-loading { font-size: 0.78rem; color: var(--text-2); font-style: italic; align-self: center; }
 
   /* Filaments */
   .filaments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
