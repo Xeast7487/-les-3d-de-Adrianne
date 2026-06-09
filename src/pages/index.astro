@@ -96,6 +96,19 @@ import Footer from '../components/Footer.astro';
       </div>
     </section>
 
+    <!-- ═══ IMPRIMANTE ══════════════════════════════════════════ -->
+    <section class="section" id="imprimante" style="display:none">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="eyebrow anim-eyebrow-scroll">Équipement</p>
+          <h2 class="split-words-scroll">Mon imprimante 3D</h2>
+          <p class="section-sub">Voici les caractéristiques de mon équipement — pour que tu saches si ton projet est réalisable avant de me contacter.</p>
+        </div>
+        <div id="printer-specs-grid" class="printer-specs-grid"></div>
+        <div id="printer-notes-block" class="printer-notes" style="display:none"></div>
+      </div>
+    </section>
+
     <!-- ═══ CTA ══════════════════════════════════════════════════ -->
     <section class="section cta-section">
       <div class="container">
@@ -220,6 +233,56 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 loadPrints();
+loadPrinterSection();
+
+async function loadPrinterSection() {
+  const { data } = await sb.from('adrianne_printer').select('*').eq('id', 'main').maybeSingle();
+  if (!data || !data.is_visible) return;
+
+  const specs = [];
+  if (data.brand || data.model) {
+    specs.push({ label: 'Imprimante', value: [data.brand, data.model].filter(Boolean).join(' '), svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' });
+  }
+  if (data.build_volume) {
+    specs.push({ label: "Volume d'impression", value: data.build_volume, svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>' });
+  }
+  if (data.nozzle_diameter) {
+    specs.push({ label: 'Diamètre de buse', value: data.nozzle_diameter, svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>' });
+  }
+  if (data.layer_height) {
+    specs.push({ label: 'Hauteur de couche', value: data.layer_height, svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>' });
+  }
+  if (data.max_speed) {
+    specs.push({ label: 'Vitesse maximale', value: data.max_speed, svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' });
+  }
+  if (data.supported_materials) {
+    specs.push({ label: 'Matériaux supportés', value: data.supported_materials, svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"/><path d="M12 12v10"/><path d="M2 12h20"/></svg>' });
+  }
+  if (data.multi_color) {
+    specs.push({ label: 'Multi-couleurs', value: data.multi_color_desc || 'Oui', svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22V12"/><path d="M12 12C10.7 9.7 8.5 8 6 8"/><path d="M12 12c1.3-2.3 3.5-4 6-4"/></svg>' });
+  }
+
+  if (!specs.length && !data.notes) return;
+
+  const grid = document.getElementById('printer-specs-grid');
+  grid.innerHTML = specs.map(s => `
+    <div class="spec-card">
+      <div class="spec-icon">${s.svg}</div>
+      <div class="spec-body">
+        <span class="spec-label">${s.label}</span>
+        <span class="spec-value">${s.value}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (data.notes) {
+    const notesBlock = document.getElementById('printer-notes-block');
+    notesBlock.textContent = data.notes;
+    notesBlock.style.display = 'block';
+  }
+
+  document.getElementById('imprimante').style.display = 'block';
+}
 </script>
 
 <style>
@@ -362,8 +425,18 @@ loadPrints();
   .cta-section .btn-primary { background: #EDF2F8; color: var(--dark); box-shadow: none; }
   .cta-section .btn-primary:hover { background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
 
+  /* Imprimante */
+  .printer-specs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+  .spec-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1.4rem; display: flex; align-items: flex-start; gap: 1rem; transition: box-shadow 0.25s, border-color 0.25s; }
+  .spec-card:hover { box-shadow: 0 6px 24px rgba(13,27,46,0.08); border-color: rgba(42,92,180,0.2); }
+  .spec-icon { width: 40px; height: 40px; background: rgba(42,92,180,0.08); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+  .spec-body { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  .spec-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-2); }
+  .spec-value { font-size: 0.95rem; font-weight: 600; color: var(--text); line-height: 1.35; word-break: break-word; }
+  .printer-notes { margin-top: 1.75rem; background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; padding: 1rem 1.25rem; font-size: 0.875rem; color: var(--text-2); line-height: 1.7; max-width: 720px; margin-left: auto; margin-right: auto; }
+
   /* Responsive */
   @media (max-width: 960px) { .hero-badge-wrap { display: none; } .apropos-inner { grid-template-columns: 1fr; gap: 2rem; } .ap-deco { display: none; } }
-  @media (max-width: 700px) { .gallery-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 480px) { .gallery-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .gallery-grid { grid-template-columns: 1fr 1fr; } .printer-specs-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .gallery-grid { grid-template-columns: 1fr; } .printer-specs-grid { grid-template-columns: 1fr; } }
 </style>

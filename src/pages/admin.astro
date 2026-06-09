@@ -31,6 +31,7 @@ import Footer from '../components/Footer.astro';
           <button class="tab-btn" data-tab="filaments">🧵 Filaments</button>
           <button class="tab-btn" data-tab="clients">👤 Clients</button>
           <button class="tab-btn" data-tab="factures">🧾 Factures</button>
+          <button class="tab-btn" data-tab="imprimante">🖨️ Imprimante</button>
           <button id="logout" class="btn-outline" style="margin-left:auto">Déconnexion</button>
         </div>
 
@@ -419,6 +420,80 @@ import Footer from '../components/Footer.astro';
           </div>
         </div><!-- fin tab-factures -->
 
+        <!-- ═══ TAB IMPRIMANTE ═══ -->
+        <div id="tab-imprimante" class="tab-content" style="display:none">
+          <div class="admin-top">
+            <div>
+              <h1>Mon imprimante</h1>
+              <p class="admin-sub">Renseigne les caractéristiques de ton imprimante pour les afficher sur la page d'accueil</p>
+            </div>
+          </div>
+          <div class="printer-form-wrap">
+            <form id="printer-form">
+              <div class="mform-row">
+                <div class="mfield">
+                  <label>Marque</label>
+                  <input type="text" id="p-brand" placeholder="ex: Bambu Lab, Creality, Prusa…" />
+                </div>
+                <div class="mfield">
+                  <label>Modèle</label>
+                  <input type="text" id="p-model" placeholder="ex: P1S, Ender 3 Pro, MK4…" />
+                </div>
+              </div>
+              <div class="mform-row">
+                <div class="mfield">
+                  <label>Volume d'impression</label>
+                  <input type="text" id="p-volume" placeholder="ex: 256 × 256 × 256 mm" />
+                </div>
+                <div class="mfield">
+                  <label>Diamètre de buse</label>
+                  <input type="text" id="p-nozzle" placeholder="ex: 0.4 mm" />
+                </div>
+              </div>
+              <div class="mform-row">
+                <div class="mfield">
+                  <label>Hauteur de couche</label>
+                  <input type="text" id="p-layer" placeholder="ex: 0.05 – 0.35 mm" />
+                </div>
+                <div class="mfield">
+                  <label>Vitesse maximale</label>
+                  <input type="text" id="p-speed" placeholder="ex: 500 mm/s" />
+                </div>
+              </div>
+              <div class="mfield">
+                <label>Matériaux supportés</label>
+                <input type="text" id="p-materials" placeholder="ex: PLA, ABS, ASA, PETG, TPU, PA…" />
+              </div>
+              <div class="mfield mfield-check">
+                <label class="check-lbl">
+                  <input type="checkbox" id="p-multicolor" />
+                  <span>Impression multi-couleurs</span>
+                </label>
+              </div>
+              <div class="mfield" id="p-multicolor-desc-field" style="display:none">
+                <label>Description du système multi-couleurs</label>
+                <input type="text" id="p-multicolor-desc" placeholder="ex: AMS 4 couleurs simultanées" />
+              </div>
+              <div class="mfield">
+                <label>Notes additionnelles <span class="opt">(optionnel)</span></label>
+                <textarea id="p-notes" rows="3" placeholder="Infos supplémentaires, capacités spéciales, précisions sur les formats acceptés…"></textarea>
+              </div>
+              <div class="mfield mfield-check">
+                <label class="check-lbl">
+                  <input type="checkbox" id="p-visible" checked />
+                  <span>Afficher la section sur la page d'accueil</span>
+                </label>
+              </div>
+              <div class="modal-foot" style="justify-content:flex-end;padding:1.5rem 0 0">
+                <div id="printer-saved-msg" class="success-msg" style="display:none;margin-right:auto">Spécifications enregistrées !</div>
+                <button type="submit" id="printer-save-btn" class="btn-primary">
+                  <span id="printer-save-text">Enregistrer</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div><!-- fin tab-imprimante -->
+
       </div>
     </div>
 
@@ -670,6 +745,25 @@ import { createClient } from '@supabase/supabase-js';
    );
    ALTER TABLE public.adrianne_invoices ENABLE ROW LEVEL SECURITY;
    CREATE POLICY "open" ON public.adrianne_invoices FOR ALL USING (true) WITH CHECK (true);
+
+   -- Imprimante (à exécuter une seule fois) :
+   CREATE TABLE IF NOT EXISTS public.adrianne_printer (
+     id                  TEXT        PRIMARY KEY DEFAULT 'main',
+     brand               TEXT        DEFAULT '',
+     model               TEXT        DEFAULT '',
+     build_volume        TEXT        DEFAULT '',
+     nozzle_diameter     TEXT        DEFAULT '',
+     layer_height        TEXT        DEFAULT '',
+     max_speed           TEXT        DEFAULT '',
+     supported_materials TEXT        DEFAULT '',
+     multi_color         BOOLEAN     DEFAULT false,
+     multi_color_desc    TEXT        DEFAULT '',
+     notes               TEXT        DEFAULT '',
+     is_visible          BOOLEAN     DEFAULT true,
+     updated_at          TIMESTAMPTZ DEFAULT NOW()
+   );
+   ALTER TABLE public.adrianne_printer ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "open" ON public.adrianne_printer FOR ALL USING (true) WITH CHECK (true);
 ══════════════════════════════════════════════════════════ */
 
 const ADMIN_PWD = 'adrianne2025'; // ← change ce mot de passe
@@ -925,6 +1019,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'filaments') loadFilaments();
     if (btn.dataset.tab === 'clients') loadClients();
     if (btn.dataset.tab === 'factures') { loadClientsForDropdown(); loadInvoices(); }
+    if (btn.dataset.tab === 'imprimante') loadPrinterInfo();
   });
 });
 
@@ -1689,6 +1784,59 @@ async function loadFilaments() {
     });
   });
 }
+
+// ── Imprimante ─────────────────────────────────────────────
+async function loadPrinterInfo() {
+  const { data } = await sb.from('adrianne_printer').select('*').eq('id', 'main').maybeSingle();
+  if (data) {
+    document.getElementById('p-brand').value             = data.brand || '';
+    document.getElementById('p-model').value             = data.model || '';
+    document.getElementById('p-volume').value            = data.build_volume || '';
+    document.getElementById('p-nozzle').value            = data.nozzle_diameter || '';
+    document.getElementById('p-layer').value             = data.layer_height || '';
+    document.getElementById('p-speed').value             = data.max_speed || '';
+    document.getElementById('p-materials').value         = data.supported_materials || '';
+    document.getElementById('p-multicolor').checked      = data.multi_color || false;
+    document.getElementById('p-multicolor-desc').value   = data.multi_color_desc || '';
+    document.getElementById('p-notes').value             = data.notes || '';
+    document.getElementById('p-visible').checked         = data.is_visible !== false;
+    document.getElementById('p-multicolor-desc-field').style.display = data.multi_color ? 'block' : 'none';
+  }
+}
+
+document.getElementById('p-multicolor').addEventListener('change', function() {
+  document.getElementById('p-multicolor-desc-field').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('printer-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('printer-save-btn');
+  const txt = document.getElementById('printer-save-text');
+  btn.disabled = true; txt.textContent = 'Enregistrement…';
+  try {
+    const payload = {
+      id: 'main',
+      brand:               document.getElementById('p-brand').value.trim(),
+      model:               document.getElementById('p-model').value.trim(),
+      build_volume:        document.getElementById('p-volume').value.trim(),
+      nozzle_diameter:     document.getElementById('p-nozzle').value.trim(),
+      layer_height:        document.getElementById('p-layer').value.trim(),
+      max_speed:           document.getElementById('p-speed').value.trim(),
+      supported_materials: document.getElementById('p-materials').value.trim(),
+      multi_color:         document.getElementById('p-multicolor').checked,
+      multi_color_desc:    document.getElementById('p-multicolor-desc').value.trim(),
+      notes:               document.getElementById('p-notes').value.trim(),
+      is_visible:          document.getElementById('p-visible').checked,
+      updated_at:          new Date().toISOString(),
+    };
+    const { error } = await sb.from('adrianne_printer').upsert(payload);
+    if (error) throw error;
+    const msg = document.getElementById('printer-saved-msg');
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  } catch (err) { alert('Erreur : ' + err.message); }
+  finally { btn.disabled = false; txt.textContent = 'Enregistrer'; }
+});
 </script>
 
 <style>
@@ -1862,4 +2010,8 @@ async function loadFilaments() {
   .inv-total-sub { font-size: 0.78rem; }
   .inv-total-grand { font-size: 1rem; color: var(--text); padding-top: 0.5rem; border-top: 1.5px solid var(--border); }
   .inv-total-grand strong { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; color: var(--accent); }
+
+  /* Imprimante */
+  .printer-form-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 18px; padding: 2rem; max-width: 720px; }
+  .success-msg { font-size: 0.82rem; font-weight: 600; color: #059669; background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.2); border-radius: 999px; padding: 0.35rem 1rem; }
 </style>
